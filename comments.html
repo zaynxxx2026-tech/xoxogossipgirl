@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>xoxo gossip girl - Comments</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- SF PRO Fonts -->
+<link rel="stylesheet" href="https://fonts.cdnfonts.com/css/sf-pro-display">
+
+<style>
+:root{
+  --pink:#ff4fd8;
+  --hot:#ff1aa6;
+  --violet:#b79cff;
+  --bg:#0c0812;
+  --glass:rgba(255,255,255,0.08);
+}
+
+*{box-sizing:border-box;margin:0;padding:0;font-family:'SF Pro Display','SF Pro Arabic',system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
+
+body{
+  background:
+    radial-gradient(900px 500px at 10% 10%, #2b1445, transparent),
+    radial-gradient(900px 500px at 90% 20%, #1b2c5a, transparent),
+    var(--bg);
+  color:white;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+header{
+  position:sticky; top:0; z-index:10;
+  backdrop-filter:blur(16px);
+  background:linear-gradient(90deg, rgba(255,79,216,.28), rgba(207,210,255,.18));
+  display:flex; justify-content:center; align-items:center;
+  padding:14px 20px;
+  border-bottom:1px solid rgba(255,255,255,.12);
+}
+
+.logo{
+  font-weight:900; font-size:22px; letter-spacing:2px;
+  text-shadow:0 0 18px var(--pink);
+}
+.logo span{color:var(--pink);}
+
+.wrap{
+  max-width:640px; margin:26px auto; padding:20px;
+  display:flex; flex-direction:column; gap:20px;
+}
+
+.tip-card{
+  background:linear-gradient(180deg,var(--glass),transparent);
+  padding:22px; border-radius:26px;
+  box-shadow:0 12px 50px rgba(255,26,166,.35);
+}
+
+.tip-card img{
+  max-width:100%; border-radius:18px; margin-top:12px;
+}
+
+.tip-info{
+  font-size:12px; opacity:.6; margin-top:8px;
+}
+
+.comments-section{
+  display:flex; flex-direction:column; gap:14px;
+}
+
+.comment-input{
+  width:100%; padding:14px; border-radius:18px;
+  border:none; background:#1f1433; color:white;
+  font-size:14px;
+}
+
+.comment-btn{
+  align-self:flex-start; border:none; border-radius:999px;
+  padding:10px 18px; font-weight:700;
+  background:linear-gradient(135deg,var(--pink),var(--hot));
+  cursor:pointer; transition:transform .2s;
+}
+.comment-btn:hover{transform:scale(1.05);}
+
+.comment-bubble{
+  background:linear-gradient(180deg,var(--glass),transparent);
+  padding:12px; border-radius:18px;
+  display:flex; align-items:flex-start; gap:10px;
+  box-shadow:0 6px 20px rgba(255,26,166,.3);
+}
+
+.comment-avatar{
+  width:36px; height:36px;
+  background:rgba(255,255,255,.15);
+  border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-weight:bold; font-size:18px;
+}
+
+.comment-content{
+  display:flex; flex-direction:column; gap:4px;
+}
+
+.comment-name{
+  font-size:12px; opacity:.6;
+}
+
+.back-btn{
+  margin-top:10px; align-self:center;
+  border:none; border-radius:999px; padding:10px 18px;
+  font-weight:700; background:linear-gradient(135deg,var(--pink),var(--hot));
+  cursor:pointer; transition:transform .2s;
+}
+.back-btn:hover{transform:scale(1.05);}
+
+.version{
+  position:fixed; bottom:12px; right:14px;
+  font-size:11px; opacity:.5;
+}
+</style>
+</head>
+
+<body>
+<header>
+  <div class="logo">xoxo <span>gossip girl</span></div>
+</header>
+
+<div class="wrap">
+  <!-- Tip Display -->
+  <div class="tip-card">
+    <div id="tipText"></div>
+    <img id="tipImg" hidden>
+    <div id="tipInfo" class="tip-info"></div>
+  </div>
+
+  <!-- Comments Section -->
+  <div class="comments-section">
+    <input type="text" id="commentInput" class="comment-input" placeholder="what do you have in mind?">
+    <button id="sendComment" class="comment-btn">Send</button>
+    <div id="commentList"></div>
+  </div>
+
+  <button class="back-btn" onclick="location.href='index.html'">Back Home</button>
+</div>
+
+<div class="version">v1.0</div>
+
+<script>
+const FEED_KEY='xoxo_feed_v1';
+const COMMENT_KEY='xoxo_comments_v1';
+
+let feed = JSON.parse(localStorage.getItem(FEED_KEY)||'[]');
+let comments = JSON.parse(localStorage.getItem(COMMENT_KEY)||'{}');
+
+const currentIndex = parseInt(localStorage.getItem('currentPost'));
+const post = feed[currentIndex];
+
+const tipText = document.getElementById('tipText');
+const tipImg = document.getElementById('tipImg');
+const tipInfo = document.getElementById('tipInfo');
+const commentInput = document.getElementById('commentInput');
+const commentList = document.getElementById('commentList');
+
+if(!post){
+  tipText.textContent = 'This gossip no longer exists.';
+} else {
+  tipText.textContent = post.text||'[Image]';
+  if(post.image){tipImg.src=post.image; tipImg.hidden=false;}
+
+  // View count per device
+  let viewedTips = JSON.parse(localStorage.getItem('viewedTips')||'[]');
+  if(!viewedTips.includes(currentIndex)){
+    post.views = (post.views||0)+1;
+    feed[currentIndex]=post;
+    localStorage.setItem(FEED_KEY,JSON.stringify(feed));
+    viewedTips.push(currentIndex);
+    localStorage.setItem('viewedTips',JSON.stringify(viewedTips));
+  }
+
+  const date = new Date(post.date||Date.now());
+  tipInfo.textContent = `${post.views||0} views • ${date.toLocaleString()}`;
+}
+
+// Render comments
+function renderComments(){
+  commentList.innerHTML='';
+  const arr = comments[currentIndex]||[];
+  if(arr.length===0){
+    commentList.innerHTML='<p style="opacity:.4">Be the first to comment…</p>';
+  } else {
+    arr.slice().reverse().forEach(c=>{
+      const div=document.createElement('div');
+      div.className='comment-bubble';
+      div.innerHTML = `<div class="comment-avatar">?</div>
+                       <div class="comment-content">
+                         <div class="comment-name">Anonymous User</div>
+                         <div>${c}</div>
+                       </div>`;
+      commentList.appendChild(div);
+    });
+  }
+}
+renderComments();
+
+document.getElementById('sendComment').onclick=()=>{
+  const txt=commentInput.value.trim();
+  if(!txt) return;
+  if(!comments[currentIndex]) comments[currentIndex]=[];
+  comments[currentIndex].push(txt);
+  localStorage.setItem(COMMENT_KEY,JSON.stringify(comments));
+  commentInput.value='';
+  renderComments();
+};
+</script>
+</body>
+</html>
