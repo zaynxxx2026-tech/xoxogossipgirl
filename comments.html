@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>The Thread</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <link rel="stylesheet" href="https://fonts.cdnfonts.com/css/sf-pro-display">
+    <style>
+        :root { --pink: #ff4fd8; --glow: rgba(255, 79, 216, 0.4); --glass: rgba(255, 255, 255, 0.08); --border: rgba(255, 255, 255, 0.18); --bg: #020004; }
+        * { box-sizing: border-box; font-family: 'SF Pro Display', 'Apple Color Emoji', sans-serif; }
+        body { background: var(--bg); color: #fff; margin: 0; background-image: radial-gradient(circle at 50% -20%, #1e0521 0%, #020004 90%); background-attachment: fixed; padding-bottom: 120px; }
+        .liquid-glass { background: var(--glass); backdrop-filter: blur(60px) saturate(210%); border: 0.5px solid var(--border); border-radius: 35px; }
+        header { position: sticky; top: 0; padding: 20px; background: rgba(2, 0, 4, 0.5); backdrop-filter: blur(30px); border-bottom: 0.5px solid var(--border); display: flex; align-items: center; justify-content: space-between; z-index: 1000; }
+        .back-btn { color: var(--pink); text-decoration: none; font-weight: 900; font-size: 13px; }
+        .container { max-width: 500px; margin: 0 auto; padding: 25px 20px; }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--glass); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--pink); font-weight: 900; }
+        .input-bar { position: fixed; bottom: 30px; left: 20px; right: 20px; max-width: 460px; margin: 0 auto; display: flex; padding: 10px 10px 10px 20px; align-items: center; gap: 10px; z-index: 2000; border: 1px solid var(--border); }
+        input { flex: 1; background: transparent; border: none; color: #fff; outline: none; font-size: 16px; }
+        .send-btn { background: var(--pink); border: none; width: 40px; height: 40px; border-radius: 50%; font-weight: 900; cursor: pointer; box-shadow: 0 0 15px var(--glow); }
+        .v-tag { position: fixed; bottom: 20px; right: 20px; font-size: 10px; opacity: 0.3; }
+    </style>
+</head>
+<body>
+<header><a href="index.html" class="back-btn">← BACK</a><div style="font-weight: 900; font-size: 16px;">THE THREAD</div><div style="width:40px"></div></header>
+<div class="container"><div id="postArea" style="margin-bottom:40px;"></div><div id="cFeed"></div></div>
+<div class="liquid-glass input-bar"><input type="text" id="ci" placeholder="Add a comment..."><button class="send-btn" id="cb">↑</button></div>
+<script>
+const firebaseConfig = { apiKey: "AIzaSyCTdVcJspQxXiq_Kd7ImL32xWsjv0HgENE", authDomain: "gossip-girl-4c9f2.firebaseapp.com", projectId: "gossip-girl-4c9f2", databaseURL: "https://gossip-girl-4c9f2-default-rtdb.firebaseio.com" };
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const pid = new URLSearchParams(window.location.search).get('id');
+
+db.ref('posts/'+pid).on('value', s => {
+    const p = s.val(); if(!p) return;
+    document.getElementById('postArea').innerHTML = `<div class="liquid-glass" style="padding:30px;"><div style="display:flex; gap:12px; margin-bottom:20px;"><div class="avatar">?</div><div><div style="font-weight:900; font-size:14px;">ANONYMOUS</div><div style="font-size:10px; opacity:0.5;">NEW GOSSIP</div></div></div><div style="font-size:20px; line-height:1.6;">${p.text}</div>${p.image ? `<img src="${p.image}" style="width:100%; border-radius:20px; margin-top:20px; border:0.5px solid var(--border);">`:''}<div style="margin-top:20px; font-size:11px; color:#00ffcc; font-weight:800;">👁 ${p.views || 0} VIEWS</div></div>`;
+});
+
+db.ref('comments/'+pid).on('value', s => {
+    const f = document.getElementById('cFeed'); f.innerHTML = ''; const d = s.val();
+    if(d) { Object.keys(d).forEach(id => {
+        const c = d[id]; const v = document.createElement('div'); v.className = 'liquid-glass'; v.style.padding='20px'; v.style.marginBottom='10px';
+        v.innerHTML = `<div style="display:flex; gap:10px; margin-bottom:10px;"><div class="avatar" style="width:30px; height:30px; font-size:12px;">?</div><div style="font-weight:900; font-size:12px;">ANONYMOUS</div></div><div style="padding-left:40px; font-size:15px;">${c.text}</div>`;
+        f.appendChild(v);
+    }); }
+});
+
+document.getElementById('cb').onclick = () => {
+    const v = document.getElementById('ci').value.trim();
+    if(v) db.ref('comments/'+pid).push({ text: v, date: Date.now() }).then(() => document.getElementById('ci').value = '');
+};
+</script>
+</body>
+</html>

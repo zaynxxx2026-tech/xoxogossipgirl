@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>The Admin Panel</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <link rel="stylesheet" href="https://fonts.cdnfonts.com/css/sf-pro-display">
+    <style>
+        :root { --pink: #ff4fd8; --glass: rgba(255, 255, 255, 0.08); --border: rgba(255, 255, 255, 0.15); --bg: #020004; }
+        * { box-sizing: border-box; font-family: 'SF Pro Display', 'Apple Color Emoji', sans-serif; }
+        body { background: var(--bg); color: #fff; margin: 0; background-image: radial-gradient(circle at 50% -20%, #1a051d 0%, #020004 85%); background-attachment: fixed; }
+        .liquid-glass { background: var(--glass); backdrop-filter: blur(60px) saturate(210%); border: 0.5px solid var(--border); border-radius: 35px; }
+        header { position: sticky; top: 0; padding: 25px; background: rgba(2, 0, 4, 0.6); backdrop-filter: blur(30px); border-bottom: 0.5px solid var(--border); display: flex; justify-content: space-between; align-items: center; z-index: 1000; }
+        .container { max-width: 500px; margin: 0 auto; padding: 30px 20px; }
+        .m-btn { flex: 1; padding: 20px; border-radius: 24px; border: 0.5px solid var(--border); font-weight: 900; font-size: 11px; cursor: pointer; background: rgba(255,255,255,0.05); color: #fff; text-transform: uppercase; letter-spacing: 1px; }
+        .tip-card { padding: 35px; margin-bottom: 30px; position: relative; border: 1px solid var(--border); }
+        .act-btn { flex: 1; padding: 20px; border-radius: 24px; border: none; font-weight: 900; cursor: pointer; text-transform: uppercase; }
+        .burn { background: rgba(255,255,255,0.1); color: #fff; }
+        .publish { background: linear-gradient(135deg, var(--pink), #ff1aa6); color: #fff; }
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; align-items: center; justify-content: center; z-index: 5000; backdrop-filter: blur(30px); }
+        .bubble { width: 340px; padding: 45px; text-align: center; border: 1px solid var(--border); }
+    </style>
+</head>
+<body>
+<header><a href="index.html" style="color:var(--pink); font-weight:900; text-decoration:none; font-size:12px; letter-spacing:1px;">← EXIT ADMIN</a><div style="font-weight:900; font-size:12px; letter-spacing:1px;">ADMIN PANEL</div></header>
+<div class="container">
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:20px;">
+        <button class="m-btn" onclick="mass('burn')" style="color:#ff3b30;">BURN ALL TIPS</button>
+        <button class="m-btn" onclick="mass('pub')" style="color:#00ffcc;">PUBLISH ALL</button>
+    </div>
+    <button class="m-btn" onclick="cleanSpotted()" style="width:100%; margin-bottom:50px; border-color: #ff3b30; color: #ff3b30;">CLEAN SPOTTED (DELETE ALL POSTS)</button>
+    <div id="vFeed"></div>
+</div>
+<div id="popConfirm" class="overlay"><div class="liquid-glass bubble"><h3 id="confTitle">Confirm</h3><p id="confMsg" style="margin-bottom:30px; line-height:1.5;"></p><div style="display:flex; gap:10px;"><button class="act-btn burn" style="flex:1" onclick="closePopups()">NO</button><button class="act-btn publish" style="flex:1" id="confirmExec">YES</button></div></div></div>
+
+<script>
+const firebaseConfig = { apiKey: "AIzaSyCTdVcJspQxXiq_Kd7ImL32xWsjv0HgENE", authDomain: "gossip-girl-4c9f2.firebaseapp.com", projectId: "gossip-girl-4c9f2", databaseURL: "https://gossip-girl-4c9f2-default-rtdb.firebaseio.com" };
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+if(sessionStorage.getItem('admin_auth') !== 'true') location.href = 'index.html';
+
+let liveTips = {};
+db.ref('tips').on('value', s => {
+    const f = document.getElementById('vFeed'); f.innerHTML = ''; liveTips = s.val() || {};
+    Object.keys(liveTips).reverse().forEach(id => {
+        const t = liveTips[id]; const c = document.createElement('div'); c.className = 'liquid-glass tip-card';
+        c.innerHTML = `<div style="font-size:20px; margin-bottom:20px; line-height:1.5;">${t.text}</div>${t.image ? `<img src="${t.image}" style="width:100%; border-radius:24px; margin-bottom:25px; border:1px solid var(--border);">`:''}<div style="display:flex; gap:12px;"><button class="act-btn burn" onclick="burn('${id}')">BURN</button><button class="act-btn publish" onclick="pub('${id}')">PUBLISH</button></div>`;
+        f.appendChild(c);
+    });
+});
+
+function closePopups() { document.getElementById('popConfirm').style.display='none'; }
+function askConfirm(title, msg, action) {
+    document.getElementById('confTitle').innerText = title; document.getElementById('confMsg').innerText = msg;
+    document.getElementById('popConfirm').style.display = 'flex';
+    document.getElementById('confirmExec').onclick = () => { action(); closePopups(); };
+}
+function burn(id) { askConfirm("Burn?", "Delete this tip?", () => db.ref('tips/'+id).remove()); }
+function pub(id) { const t = liveTips[id]; db.ref('posts').push({...t, views: 0, publishDate: Date.now()}).then(() => db.ref('tips/'+id).remove()); }
+function mass(type) { const ks = Object.keys(liveTips); if(!ks.length) return; askConfirm("Mass Action", "Are you sure?", () => ks.forEach(k => type==='burn' ? db.ref('tips/'+k).remove() : pub(k))); }
+function cleanSpotted() { askConfirm("Clean Spotted?", "Delete all public posts?", () => db.ref('posts').remove()); }
+</script>
+</body>
+</html>
