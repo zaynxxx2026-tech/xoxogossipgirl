@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin • Gossip Girl</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <link rel="stylesheet" href="https://fonts.cdnfonts.com/css/sf-pro-display">
+    <style>
+        :root { --pink: #ff4fd8; --bg: #000; --red: #ff3b30; --mint: #00ffcc; --glass-bg: rgba(255, 255, 255, 0.05); --glass-border: rgba(255, 255, 255, 0.12); }
+        * { box-sizing: border-box; font-family: 'SF Pro Display', sans-serif; }
+        body { background: var(--bg); color: #fff; margin: 0; background-image: radial-gradient(circle at 50% -20%, #200624 0%, #000000 100%); background-attachment: fixed; }
+        .liquid-card { background: var(--glass-bg); backdrop-filter: blur(40px) saturate(200%); border: 1px solid var(--glass-border); border-radius: 32px; margin-bottom: 20px; }
+        header { position: sticky; top: 0; padding: 25px; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(25px); border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center; z-index: 1000; }
+        .container { max-width: 500px; margin: 0 auto; padding: 30px 20px; }
+        .btn { padding: 16px; border-radius: 20px; border: none; font-weight: 900; cursor: pointer; font-size: 11px; text-transform: uppercase; }
+        .btn-pub { background: linear-gradient(135deg, var(--pink), #b00095); color: #fff; }
+        .btn-burn { background: rgba(255, 59, 48, 0.15); color: var(--red); border: 1px solid rgba(255, 59, 48, 0.3); }
+        .btn-nuke { width: 100%; background: linear-gradient(135deg, #ff3b30, #8b0000); color: #fff; margin-bottom: 30px; }
+        .nuke-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(30px); z-index: 10001; display: none; align-items: center; justify-content: center; padding: 30px; }
+        .nuke-overlay.active { display: flex; }
+        .v-tag { position: fixed; bottom: 30px; right: 30px; font-size: 11px; font-weight: 900; color: rgba(255,255,255,0.2); }
+    </style>
+</head>
+<body>
+
+<div id="nukePopup" class="nuke-overlay">
+    <div class="liquid-card" style="padding: 40px; text-align: center; max-width: 400px; border: 1px solid var(--red);">
+        <h2 style="color:var(--red); font-size: 28px; margin-bottom: 10px;">DANGER</h2>
+        <input type="text" id="nukeConfirm" style="width:100%; padding:15px; background:rgba(255,255,255,0.05); color:#fff; border:1px solid var(--glass-border); border-radius:15px; text-align:center; margin-bottom:20px; outline:none;" placeholder="Type 'NUKE'">
+        <div style="display:flex; gap:12px;">
+            <button class="btn" style="flex:1; color:#fff;" onclick="document.getElementById('nukePopup').classList.remove('active')">CANCEL</button>
+            <button class="btn btn-nuke" style="flex:1; margin:0;" onclick="confirmNuke()">EXECUTE</button>
+        </div>
+    </div>
+</div>
+
+<header><a href="index.html" style="color:var(--pink); font-weight:900; text-decoration:none; font-size: 13px;">← EXIT</a><div style="font-weight:900; letter-spacing: 3px; font-size: 13px;">ADMIN</div></header>
+
+<div class="container">
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:15px;">
+        <button class="btn btn-burn" onclick="mass('burn')">BURN ALL</button>
+        <button class="btn" style="background:rgba(255,255,255,0.1); color:var(--mint)" onclick="mass('pub')">PUBLISH ALL</button>
+    </div>
+    <button class="btn btn-nuke" onclick="document.getElementById('nukePopup').classList.add('active')">NUKE PUBLIC FEED</button>
+    <div id="vFeed"></div>
+</div>
+
+<div class="v-tag">V3.1 LIQUID</div>
+
+<script>
+const firebaseConfig = { apiKey: "AIzaSyCTdVcJspQxXiq_Kd7ImL32xWsjv0HgENE", authDomain: "gossip-girl-4c9f2.firebaseapp.com", projectId: "gossip-girl-4c9f2", databaseURL: "https://gossip-girl-4c9f2-default-rtdb.firebaseio.com" };
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+if(sessionStorage.getItem('admin_auth') !== 'true') window.location.href = 'index.html';
+
+let currentTips = {};
+db.ref('tips').on('value', s => {
+    const f = document.getElementById('vFeed'); f.innerHTML = '';
+    currentTips = s.val() || {};
+    Object.keys(currentTips).reverse().forEach(id => {
+        const t = currentTips[id];
+        const card = document.createElement('div'); card.className = 'liquid-card'; card.style.padding = '30px';
+        card.innerHTML = `<div style="font-size:18px; margin-bottom:20px;">${t.text || ''}</div>
+            ${t.image ? `<img src="${t.image}" style="width:100%; border-radius:20px; margin-bottom:20px;">` : ''}
+            <div style="display:flex; gap:12px;"><button class="btn btn-burn" style="flex:1" onclick="burn('${id}')">BURN</button>
+            <button class="btn btn-pub" style="flex:1.5" onclick="pub('${id}')">PUBLISH</button></div>`;
+        f.appendChild(card);
+    });
+});
+
+function burn(id) { db.ref('tips/' + id).remove(); }
+function pub(id) { const t = currentTips[id]; if(t) db.ref('posts').push({ text: t.text || "", image: t.image || null, date: Date.now(), views: 0 }).then(() => burn(id)); }
+function mass(type) { if(confirm("Sure?")) Object.keys(currentTips).forEach(k => type === 'burn' ? burn(k) : pub(k)); }
+function confirmNuke() { if(document.getElementById('nukeConfirm').value === 'NUKE') { db.ref('posts').remove(); db.ref('comments').remove(); location.reload(); } }
+</script>
+</body>
+</html>
