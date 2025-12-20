@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>xoxo gossip girl</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <link rel="stylesheet" href="https://fonts.cdnfonts.com/css/sf-pro-display">
+    <style>
+        :root { --pink: #ff4fd8; --glow: rgba(255, 79, 216, 0.5); --glass-bg: rgba(255, 255, 255, 0.08); --glass-border: rgba(255, 255, 255, 0.15); --glass-highlight: rgba(255, 255, 255, 0.2); --bg: #000000; --mint: #00ffcc; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'SF Pro Display', -apple-system, sans-serif; }
+        body { background: var(--bg); color: #fff; margin: 0; background-image: radial-gradient(circle at 50% -20%, #200624 0%, #000000 100%); background-attachment: fixed; overflow-x: hidden; }
+        .liquid-card { background: var(--glass-bg); backdrop-filter: blur(40px) saturate(200%); -webkit-backdrop-filter: blur(40px) saturate(200%); border: 1px solid var(--glass-border); border-top: 1px solid var(--glass-highlight); border-radius: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        header { position: fixed; top: 0; width: 100%; z-index: 1000; padding: 60px 0 20px; display: flex; justify-content: center; pointer-events: none; transition: 0.1s ease-out; }
+        .branding { text-align: center; pointer-events: auto; }
+        .title { font-size: 48px; font-weight: 900; letter-spacing: -2.5px; margin: 0; line-height: 0.8; }
+        .title span { color: var(--pink); text-shadow: 0 0 30px var(--glow); }
+        .subtitle { font-size: 11px; color: var(--mint); font-weight: 800; margin-top: 15px; letter-spacing: 2px; text-transform: uppercase; }
+        .container { max-width: 500px; margin: 180px auto 0; padding: 0 20px 120px; position: relative; z-index: 10; }
+        
+        /* Liquid Animation for Popups */
+        .welcome-overlay, .admin-overlay { 
+            position: fixed; inset: 0; z-index: 10000; 
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(25px); 
+            display: none; align-items: center; justify-content: center; padding: 30px; 
+            opacity: 0; transition: opacity 0.4s ease; 
+        }
+        .popup-content { 
+            transform: scale(0.8) translateY(30px); 
+            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); 
+        }
+        .welcome-overlay.active, .admin-overlay.active { opacity: 1; }
+        .welcome-overlay.active .popup-content, .admin-overlay.active .popup-content { transform: scale(1) translateY(0); }
+        
+        .post-preview-wrapper { position: relative; overflow: hidden; margin-bottom: 20px; touch-action: pan-y; opacity: 0; transform: translateY(20px) scale(0.95); transition: all 0.7s cubic-bezier(0.2, 0.8, 0.2, 1); border-radius: 30px; }
+        .post-preview-wrapper.visible { opacity: 1; transform: translateY(0) scale(1); }
+        .swipe-hint { position: absolute; right: 0; top: 0; bottom: 0; width: 100px; background: var(--pink); display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 12px; color: #000; z-index: 1; transform: translateX(100%); }
+        .post-preview { padding: 25px; position: relative; z-index: 2; transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1); background: transparent; cursor: pointer; }
+        
+        /* New Premium Badge Colors */
+        .badge { display: inline-block; padding: 5px 12px; border-radius: 12px; font-size: 9px; font-weight: 900; text-transform: uppercase; margin-right: 6px; margin-bottom: 8px; letter-spacing: 0.5px; }
+        .badge-hot { background: linear-gradient(135deg, #ff3b30, #ff9500); color: #fff; box-shadow: 0 4px 15px rgba(255, 59, 48, 0.4); border: 1px solid rgba(255,255,255,0.2); }
+        .badge-view { background: linear-gradient(135deg, #007aff, #00f2ff); color: #fff; box-shadow: 0 4px 15px rgba(0, 122, 255, 0.4); border: 1px solid rgba(255,255,255,0.2); }
+
+        .search-box { width: 100%; padding: 18px 25px; border-radius: 25px; background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); color: #fff; outline: none; transition: 0.3s; margin-top: 15px; }
+        .btn { padding: 18px; border-radius: 22px; border: none; font-weight: 900; cursor: pointer; text-transform: uppercase; font-size: 11px; transition: 0.3s; letter-spacing: 0.5px; }
+        .btn-send { background: linear-gradient(135deg, var(--pink), #b00095); color: #fff; box-shadow: 0 10px 30px var(--glow); flex: 2; }
+        .v-tag { position: fixed; bottom: 30px; right: 30px; font-size: 11px; font-weight: 900; z-index: 9999; color: rgba(255,255,255,0.25); }
+        .admin-trigger { position: fixed; bottom: 30px; left: 30px; font-size: 11px; font-weight: 900; z-index: 9999; color: #fff; text-decoration: none; cursor: pointer; padding: 12px 20px; border-radius: 20px; background: var(--glass-bg); backdrop-filter: blur(10px); border: 1px solid var(--glass-border); box-shadow: 0 0 15px rgba(255,79,216,0.2); }
+        .admin-dot { position: absolute; top: -4px; right: -4px; width: 12px; height: 12px; background: var(--pink); border-radius: 50%; display: none; box-shadow: 0 0 10px var(--pink); animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+        
+        .glass-input { width: 100%; padding: 15px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 15px; color: #fff; margin-bottom: 20px; outline: none; text-align: center; font-size: 16px; letter-spacing: 2px; }
+    </style>
+</head>
+<body>
+
+<div id="welcomePopup" class="welcome-overlay">
+    <div class="liquid-card popup-content" style="max-width: 400px; padding: 40px; text-align: center;">
+        <h2 style="color:var(--pink); margin-bottom:20px; font-size: 26px; line-height: 1.2;">Hey Upper East Siders, Gossip Girl here.</h2>
+        <p style="font-size:14px; line-height:1.6; opacity:0.8; margin-bottom:30px;">Welcome to XOXO Gossip Girl: your hub for all the tea, scandals, and anonymous tips. Drop a tip, scroll the latest leaks, and gossip freely, totally anonymous.<br><br>Don't forget to allow notification permission to be notified whenever new gossip drops.</p>
+        <button class="btn btn-send" style="width:100%" onclick="askNotifs()">Allow notifications</button>
+    </div>
+</div>
+
+<div id="adminPopup" class="admin-overlay">
+    <div class="liquid-card popup-content" style="max-width: 350px; width: 90%; padding: 40px; text-align: center;">
+        <h2 style="color:var(--pink); margin-bottom:10px; font-size: 22px;">RESTRICTED</h2>
+        <p style="font-size:12px; opacity:0.6; margin-bottom:25px;">Enter Access Passcode</p>
+        <input type="password" id="adminPass" class="glass-input" placeholder="••••••••">
+        <div style="display:flex; gap:10px;">
+            <button class="btn" style="background:rgba(255,255,255,0.1); color:#fff; flex:1;" onclick="closeAdmin()">CANCEL</button>
+            <button class="btn btn-send" style="flex:1;" onclick="verifyAdmin()">ENTER</button>
+        </div>
+    </div>
+</div>
+
+<header id="mainHead">
+    <div class="branding">
+        <h1 class="title">xoxo <span>gossip girl</span></h1>
+        <div class="subtitle">have a holly jolly christmas, xoxo</div>
+    </div>
+</header>
+
+<div class="container">
+    <div style="margin: 0 0 15px 20px;">
+        <label style="color:var(--pink); font-weight:900; font-size:24px; text-shadow: 0 0 15px var(--glow);">Send Tip</label> 
+        <div style="font-size:12px; opacity:0.6; margin-top:4px; font-weight:700;">(all anonymous, no sign up required)</div>
+    </div>
+    <div class="composer liquid-card" style="padding:25px; margin-bottom:60px;">
+        <div id="mediaPrev" style="display:none; margin-bottom: 20px; border-radius: 20px; overflow: hidden;"><img id="imgSrc" style="width:100%;"></div>
+        <textarea id="tipIn" placeholder="Spill the tea..." style="width: 100%; background: transparent; border: none; color: #fff; font-size: 18px; outline: none; margin-bottom: 20px; resize: none; min-height: 80px;"></textarea>
+        <div style="display:flex; gap:12px;">
+            <button class="btn" style="background:rgba(255,255,255,0.06); color:#fff; border:1px solid var(--glass-border); flex:1;" onclick="document.getElementById('fileIn').click()">ADD PHOTO</button>
+            <button class="btn btn-send" id="sendBtn">SEND</button>
+        </div>
+        <input type="file" id="fileIn" accept="image/*" style="display:none" onchange="preview(this)">
+    </div>
+    <div style="margin-bottom:30px;">
+        <div style="display:flex; align-items:center; gap:15px; margin-bottom:10px;">
+            <h2 style="font-weight:900; margin:0; font-size:38px; letter-spacing:-1.5px;">Spotted!</h2>
+            <div id="unreadBadge" style="background:var(--pink); padding:4px 12px; border-radius:15px; font-weight:900; font-size:12px; display:none;">0</div>
+        </div>
+        <input type="text" class="search-box" id="searchBar" placeholder="Search keywords..." oninput="filterPosts()">
+    </div>
+    <div id="feed"></div>
+</div>
+
+<div class="admin-trigger" onclick="openAdmin()">ADMIN <div class="admin-dot" id="adminAlert"></div></div>
+<div class="v-tag">V3.0 LIQUID</div>
+
+<script>
+const firebaseConfig = { apiKey: "AIzaSyCTdVcJspQxXiq_Kd7ImL32xWsjv0HgENE", authDomain: "gossip-girl-4c9f2.firebaseapp.com", projectId: "gossip-girl-4c9f2", databaseURL: "https://gossip-girl-4c9f2-default-rtdb.firebaseio.com" };
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+let b64 = null, allPosts = [], commentCounts = {};
+
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => { if(entry.isIntersecting) entry.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+
+window.onload = () => {
+    if(!localStorage.getItem('visited_v3_liquid')) {
+        const pop = document.getElementById('welcomePopup');
+        pop.style.display = 'flex';
+        setTimeout(() => pop.classList.add('active'), 50);
+    }
+};
+
+function askNotifs() {
+    if ("Notification" in window) { 
+        Notification.requestPermission().then(() => closeWelcome()); 
+    } else { closeWelcome(); }
+}
+
+function closeWelcome() {
+    localStorage.setItem('visited_v3_liquid', 'true');
+    const pop = document.getElementById('welcomePopup');
+    pop.classList.remove('active');
+    setTimeout(() => { pop.style.display = 'none'; }, 500);
+}
+
+function openAdmin() {
+    const pop = document.getElementById('adminPopup');
+    pop.style.display = 'flex';
+    setTimeout(() => pop.classList.add('active'), 50);
+}
+
+function closeAdmin() {
+    const pop = document.getElementById('adminPopup');
+    pop.classList.remove('active');
+    setTimeout(() => { pop.style.display = 'none'; }, 500);
+}
+
+function verifyAdmin() {
+    const p = document.getElementById('adminPass').value;
+    if(p === "ykuluvmexoxogg2026xxx") {
+        sessionStorage.setItem('admin_auth', 'true');
+        window.location.href = 'admin.html';
+    } else {
+        closeAdmin();
+        document.getElementById('adminPass').value = '';
+    }
+}
+
+window.addEventListener('scroll', () => {
+    const s = window.scrollY;
+    const h = document.getElementById('mainHead');
+    if(s < 450) {
+        h.style.transform = `translateY(${-(s * 0.4)}px) scale(${1 - s/1500})`;
+        h.style.opacity = Math.max(0, 1 - (s / 300));
+        h.style.filter = `blur(${Math.min(15, s / 20)}px)`;
+    } else { h.style.opacity = 0; }
+});
+
+db.ref('tips').on('child_added', () => { document.getElementById('adminAlert').style.display = 'block'; });
+
+function initData() {
+    db.ref('comments').on('value', snap => {
+        const data = snap.val() || {};
+        commentCounts = {};
+        Object.keys(data).forEach(id => { commentCounts[id] = Object.keys(data[id]).length; });
+        renderPosts();
+    });
+    db.ref('posts').on('value', s => {
+        allPosts = s.val() ? Object.keys(s.val()).map(k => ({id:k, ...s.val()[k]})) : [];
+        renderPosts();
+    });
+}
+initData();
+
+function renderPosts() {
+    const q = document.getElementById('searchBar').value.toLowerCase().trim();
+    let posts = [...allPosts].filter(p => (p.text||"").toLowerCase().includes(q)).reverse();
+    
+    const f = document.getElementById('feed'); f.innerHTML = '';
+    const readPosts = JSON.parse(localStorage.getItem('read_posts') || '[]');
+    const unreadCount = allPosts.filter(p => !readPosts.includes(p.id)).length;
+    document.getElementById('unreadBadge').innerText = unreadCount;
+    document.getElementById('unreadBadge').style.display = unreadCount > 0 ? 'block' : 'none';
+
+    // Premium Badge Assignment Logic (Oldest breaks ties)
+    const sortedByViews = [...allPosts].sort((a,b) => (b.views||0) - (a.views||0) || a.date - b.date);
+    const mostViewedPost = sortedByViews[0];
+    
+    const sortedByComments = [...allPosts].sort((a,b) => (commentCounts[b.id]||0) - (commentCounts[a.id]||0) || a.date - b.date);
+    const mostCommentedPost = sortedByComments[0];
+
+    posts.forEach((p) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'post-preview-wrapper liquid-card';
+        const isRead = readPosts.includes(p.id);
+        
+        let badgesHtml = '';
+        if(mostViewedPost && p.id === mostViewedPost.id && p.views > 0) badgesHtml += '<span class="badge badge-view">Most Viewed</span>';
+        if(mostCommentedPost && p.id === mostCommentedPost.id && (commentCounts[p.id]||0) > 0) badgesHtml += '<span class="badge badge-hot">Hot Topic</span>';
+
+        const photoIndicator = p.image ? (p.text ? '<div style="color:var(--mint); font-size:10px; font-weight:900; margin-top:8px;">[PHOTO INCLUDED]</div>' : '<div style="color:var(--mint); font-size:10px; font-weight:900;">[PHOTO]</div>') : '';
+        const displayText = p.text ? p.text : "";
+
+        wrapper.innerHTML = `
+            <div class="swipe-hint">VIEW THREAD</div>
+            <div class="post-preview" id="post-${p.id}">
+                ${!isRead ? '<div style="position:absolute; top:20px; right:20px; width:8px; height:8px; background:var(--mint); border-radius:50%; box-shadow: 0 0 10px var(--mint);"></div>' : ''}
+                <div style="margin-bottom:12px;">${badgesHtml}</div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                     <div style="color:var(--pink); font-weight:900; font-size:11px; text-transform:uppercase;">new gossip dropped</div>
+                     <div style="font-size:10px; opacity:0.5; font-weight:700;">${timeAgo(p.date)}</div>
+                </div>
+                <div style="font-size:17px; line-height:1.5; font-weight:500; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; opacity:0.9;">${displayText}</div>
+                ${photoIndicator}
+                <div style="margin-top:20px; display:flex; justify-content:space-between; align-items:center;">
+                    <div style="font-size:11px; opacity:0.7; font-weight:800; color:var(--mint);">👁 ${p.views || 0}  •  💬 ${commentCounts[p.id] || 0}</div>
+                    <div style="font-size:10px; font-weight:900; color:var(--pink); opacity:0.6;">SWIPE →</div>
+                </div>
+            </div>`;
+        f.appendChild(wrapper); observer.observe(wrapper);
+        setupSwipe(`post-${p.id}`, p.id);
+    });
+}
+
+function setupSwipe(elementId, postId) {
+    const el = document.getElementById(elementId);
+    let startX = 0;
+    el.addEventListener('touchstart', (e) => startX = e.touches[0].clientX, {passive: true});
+    el.addEventListener('touchmove', (e) => {
+        let diff = startX - e.touches[0].clientX;
+        if(diff > 0 && diff < 100) el.style.transform = `translateX(-${diff}px)`;
+    }, {passive: true});
+    el.addEventListener('touchend', (e) => {
+        let diff = startX - e.changedTouches[0].clientX;
+        if(diff > 70) { el.style.transform = `translateX(-100%)`; goToThread(postId); } 
+        else { el.style.transform = `translateX(0)`; }
+    });
+    el.onclick = () => goToThread(postId);
+}
+
+function goToThread(id) {
+    let reads = JSON.parse(localStorage.getItem('read_posts') || '[]');
+    if(!reads.includes(id)) { reads.push(id); localStorage.setItem('read_posts', JSON.stringify(reads)); }
+    location.href = `thread.html?id=${id}`;
+}
+
+function timeAgo(t) {
+    const s = Math.floor((Date.now() - t) / 1000);
+    if(s < 60) return 'now';
+    if(s < 3600) return Math.floor(s/60) + 'm';
+    if(s < 86400) return Math.floor(s/3600) + 'h';
+    return Math.floor(s/86400) + 'd';
+}
+
+function preview(i) { if(i.files[0]) { const r = new FileReader(); r.onload = e => { b64 = e.target.result; document.getElementById('imgSrc').src = b64; document.getElementById('mediaPrev').style.display='block'; }; r.readAsDataURL(i.files[0]); } }
+
+document.getElementById('sendBtn').onclick = function() {
+    const t = document.getElementById('tipIn').value.trim();
+    if(!t && !b64) return;
+    this.innerText = "SENDING..."; this.disabled = true;
+    db.ref('tips').push({ text: t, image: b64, date: Date.now(), views: 0 }).then(() => {
+        document.getElementById('tipIn').value=''; b64=null; 
+        document.getElementById('mediaPrev').style.display='none';
+        this.innerText = "SEND"; this.disabled = false;
+    });
+};
+</script>
+</body>
+</html>

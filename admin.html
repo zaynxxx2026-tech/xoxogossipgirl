@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin • Gossip Girl</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <link rel="stylesheet" href="https://fonts.cdnfonts.com/css/sf-pro-display">
+    <style>
+        :root { --pink: #ff4fd8; --bg: #000; --red: #ff3b30; --mint: #00ffcc; --glass-bg: rgba(255, 255, 255, 0.05); --glass-border: rgba(255, 255, 255, 0.12); }
+        * { box-sizing: border-box; font-family: 'SF Pro Display', sans-serif; }
+        body { background: var(--bg); color: #fff; margin: 0; background-image: radial-gradient(circle at 50% -20%, #200624 0%, #000000 100%); background-attachment: fixed; }
+        .liquid-card { background: var(--glass-bg); backdrop-filter: blur(40px) saturate(200%); border: 1px solid var(--glass-border); border-radius: 30px; margin-bottom: 20px; }
+        header { position: sticky; top: 0; padding: 25px; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(20px); border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center; z-index: 1000; }
+        .container { max-width: 500px; margin: 0 auto; padding: 30px 20px; }
+        .btn { padding: 16px; border-radius: 20px; border: none; font-weight: 900; cursor: pointer; font-size: 11px; text-transform: uppercase; }
+        .btn-pub { background: linear-gradient(135deg, var(--pink), #b00095); color: #fff; }
+        .btn-burn { background: rgba(255, 59, 48, 0.15); color: var(--red); border: 1px solid rgba(255, 59, 48, 0.3); }
+        .btn-nuke { width: 100%; background: linear-gradient(135deg, #ff3b30, #8b0000); color: #fff; margin-bottom: 30px; }
+        .btn-mass { background: rgba(255,255,255,0.05); color: #fff; border: 1px solid var(--glass-border); }
+        .v-tag { position: fixed; bottom: 30px; right: 30px; font-size: 11px; font-weight: 900; color: rgba(255,255,255,0.2); }
+    </style>
+</head>
+<body>
+<header><a href="index.html" style="color:var(--pink); font-weight:900; text-decoration:none; font-size: 13px;">← EXIT SYSTEM</a><div style="font-weight:900; letter-spacing: 3px; font-size: 14px;">ADMIN PANEL</div></header>
+<div class="container">
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:15px;">
+        <button class="btn btn-burn" onclick="mass('burn')">BURN ALL TIPS</button>
+        <button class="btn btn-mass" style="color:var(--mint)" onclick="mass('pub')">PUBLISH ALL</button>
+    </div>
+    <button class="btn btn-nuke" onclick="nukeFeed()">NUKE ENTIRE PUBLIC FEED</button>
+    <div id="vFeed"></div>
+</div>
+<div class="v-tag">V3.0 LIQUID</div>
+<script>
+const firebaseConfig = { apiKey: "AIzaSyCTdVcJspQxXiq_Kd7ImL32xWsjv0HgENE", authDomain: "gossip-girl-4c9f2.firebaseapp.com", projectId: "gossip-girl-4c9f2", databaseURL: "https://gossip-girl-4c9f2-default-rtdb.firebaseio.com" };
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+if(sessionStorage.getItem('admin_auth') !== 'true') window.location.href = 'index.html';
+
+let currentTips = {};
+db.ref('tips').on('value', s => {
+    const f = document.getElementById('vFeed'); f.innerHTML = '';
+    currentTips = s.val() || {};
+    Object.keys(currentTips).reverse().forEach(id => {
+        const t = currentTips[id];
+        const card = document.createElement('div'); card.className = 'liquid-card'; card.style.padding = '30px';
+        card.innerHTML = `<div style="font-size:18px; margin-bottom:20px;">${t.text || ''}</div>
+            ${t.image ? `<img src="${t.image}" style="width:100%; border-radius:20px; margin-bottom:20px;">` : ''}
+            <div style="display:flex; gap:12px;"><button class="btn btn-burn" style="flex:1" onclick="burn('${id}')">BURN</button>
+            <button class="btn btn-pub" style="flex:1.5" onclick="pub('${id}')">PUBLISH</button></div>`;
+        f.appendChild(card);
+    });
+});
+
+function burn(id) { db.ref('tips/' + id).remove(); }
+function pub(id) {
+    const t = currentTips[id];
+    if(t) db.ref('posts').push({ text: t.text || "", image: t.image || null, date: Date.now(), views: 0 }).then(() => burn(id));
+}
+function mass(type) {
+    if(confirm("Are you sure?")) Object.keys(currentTips).forEach(k => type === 'burn' ? burn(k) : pub(k));
+}
+function nukeFeed() {
+    if(prompt("Type 'NUKE' to clear feed:") === 'NUKE') { db.ref('posts').remove(); db.ref('comments').remove(); }
+}
+</script>
+</body>
+</html>
