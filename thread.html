@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>The Thread | V1.0 OFFICIAL</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link rel="stylesheet" href="https://fonts.cdnfonts.com/css/sf-pro-display">
+    <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..900;1,6..96,400..900&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --pink: #D4AF37; 
+            --glow: rgba(212, 175, 55, 0.4); 
+            --blue: #0099ff;
+            --blue-glow: rgba(0, 153, 255, 0.4);
+            --glass-bg: rgba(18, 18, 18, 0.85); 
+            --glass-border: rgba(212, 175, 55, 0.2); 
+            --glass-highlight: rgba(212, 175, 55, 0.4); 
+            --bg: #000000; 
+            --liquid-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.9);
+            --gold-gradient: linear-gradient(135deg, #BF953F, #FCF6BA, #B38728, #FBF5B7, #AA771C);
+            --ios-spring: cubic-bezier(0.2, 0, 0, 1);
+        }
+        
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'SF Pro Display', sans-serif; letter-spacing: -0.015em; }
+
+        @keyframes masterReveal { 0% { opacity: 0; } 100% { opacity: 1; } }
+
+        body { 
+            background: var(--bg); color: #fff; margin: 0; 
+            background-image: radial-gradient(circle at 50% -10%, #1a1a1a 0%, #000000 100%); 
+            background-attachment: fixed; overflow-x: hidden; -webkit-font-smoothing: antialiased; 
+            animation: masterReveal 0.8s ease forwards;
+            padding-bottom: calc(140px + env(safe-area-inset-bottom));
+        }
+
+        .liquid-card { 
+            background: var(--glass-bg); backdrop-filter: blur(20px) saturate(210%); -webkit-backdrop-filter: blur(20px) saturate(210%); 
+            border: 1px solid var(--glass-border); border-top: 1.5px solid var(--glass-highlight); border-radius: 40px; 
+            box-shadow: var(--liquid-shadow), inset 0 1px 1px rgba(212,175,55,0.05);
+            transition: transform 0.4s var(--ios-spring);
+            transform: translateZ(0); /* FPS Fix */
+        }
+
+        header { 
+            position: sticky; top: 0; width: 100%; z-index: 1000; padding: 20px; 
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(20px); border-bottom: 1px solid var(--glass-border);
+        }
+
+        .container { max-width: 480px; margin: 0 auto; padding: 20px; width: 100%; }
+
+        .badge { display: inline-flex; align-items: center; padding: 6px 14px; border-radius: 20px; font-size: 9px; font-weight: 800; text-transform: uppercase; margin-right: 6px; margin-bottom: 6px; border: 1px solid rgba(212, 175, 55, 0.3); backdrop-filter: blur(10px); white-space: nowrap; }
+        .b-gg { background: var(--gold-gradient); color: #000; box-shadow: 0 0 15px var(--glow); border: 1px solid #fff; }
+        .b-new { background: #fff; color: #000; border: none; }
+        .b-verify { background: rgba(255, 255, 255, 0.1); color: #fff; border-color: rgba(255,255,255,0.2); }
+        .b-hot { background: #000; color: var(--pink); border-color: var(--pink); box-shadow: 0 0 10px rgba(212,175,55,0.2); }
+
+        .v-indicator { 
+            background: var(--blue); color: white; min-width: 18px; height: 18px; border-radius: 50%; 
+            font-size: 9px; display: inline-flex; align-items: center; justify-content: center; 
+            margin-left: 6px; box-shadow: 0 0 10px var(--blue-glow); font-weight: 900; padding: 0 5px;
+        }
+
+        .comment-swipe-zone { position: relative; touch-action: pan-y; margin-bottom: 12px; transform: translateZ(0); }
+        
+        .input-wrapper { 
+            position: fixed !important; bottom: calc(35px + env(safe-area-inset-bottom)) !important; 
+            left: 50% !important; transform: translateX(-50%) !important; 
+            width: 90% !important; max-width: 420px !important; z-index: 999999 !important; pointer-events: none;
+        }
+        .input-bar { 
+            pointer-events: auto; display: flex; align-items: center; gap: 10px; padding: 8px 18px; 
+            border-radius: 50px; background: rgba(25, 25, 25, 0.95) !important; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8); border: 1px solid var(--glass-border);
+        }
+        #ci { flex: 1; background: transparent; border: none; color: #fff; font-size: 16px; padding: 12px 0; outline: none; }
+        
+        .action-btn { width: 44px; height: 44px; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; }
+        .btn-send { background: var(--gold-gradient); color: #000; font-weight: 900; font-size: 20px; }
+
+        .verify-btn { background: var(--blue); color: white; padding: 10px 20px; border-radius: 100px; font-size: 10px; font-weight: 800; border: none; box-shadow: 0 5px 15px var(--blue-glow); cursor: pointer; }
+        .verify-btn.active { background: rgba(255, 255, 255, 0.1); color: var(--blue); box-shadow: none; border: 1px solid var(--blue); }
+        .share-btn { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border); color: #fff; padding: 10px 20px; border-radius: 100px; font-size: 10px; font-weight: 800; cursor: pointer; }
+
+        .v-tag { position: fixed; bottom: 12px; right: 20px; font-size: 8px; font-weight: 900; color: var(--pink); opacity: 0.3; letter-spacing: 1px; pointer-events: none; z-index: 5000; }
+        #captureArea { background: #000; overflow: hidden; }
+    </style>
+</head>
+<body>
+
+<header>
+    <a href="index.html" style="color:var(--pink); text-decoration:none; font-weight:800; font-size:10px; letter-spacing:1px;">← BACK</a>
+    <div style="font-family:'Bodoni Moda', serif; font-style:italic; font-weight:800; letter-spacing:1px; color:var(--pink);">Tip Thread</div>
+    <div style="width:40px"></div>
+</header>
+
+<main class="container">
+    <div id="postArea"></div>
+    <div style="margin: 40px 0 25px 5px; display: flex; align-items: center; gap: 12px;">
+        <span style="font-weight: 800; font-size: 26px; letter-spacing: -1.2px;">Comments</span>
+        <span id="commentCount" style="font-weight: 800; font-size: 24px; color: var(--pink); opacity: 0.5;">0</span>
+    </div>
+    <div id="cFeed"></div>
+</main>
+
+<div class="input-wrapper">
+    <div id="replyBanner" style="display:none; pointer-events: auto; background: rgba(212, 175, 55, 0.95); backdrop-filter: blur(25px); border-radius: 25px 25px 0 0; padding: 12px 20px; font-size: 10px; font-weight: 800; justify-content: space-between; align-items: center; color: #000; border: 1px solid var(--glass-border); border-bottom: none;">
+        <span>REPLYING TO ANONYMOUS...</span>
+        <span onclick="cancelReply()" style="cursor:pointer; background:rgba(0,0,0,0.2); padding:5px 12px; border-radius:15px; font-size: 8px;">CANCEL</span>
+    </div>
+    <div class="liquid-card input-bar">
+        <input type="text" id="ci" placeholder="Start controversy..." autocomplete="off">
+        <button class="action-btn btn-send" id="cb">↑</button>
+    </div>
+</div>
+
+<div class="v-tag">V1.0 OFFICIAL</div>
+
+<script>
+(function() {
+    const firebaseConfig = { 
+        apiKey: "AIzaSyCTdVcJspQxXiq_Kd7ImL32xWsjv0HgENE", 
+        authDomain: "gossip-girl-4c9f2.firebaseapp.com", 
+        projectId: "gossip-girl-4c9f2", 
+        databaseURL: "https://gossip-girl-4c9f2-default-rtdb.firebaseio.com" 
+    };
+
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    
+    const pid = new URLSearchParams(window.location.search).get('id');
+    const myUid = localStorage.getItem('gg_id'); 
+    const IS_GG = sessionStorage.getItem('admin_auth') === 'true';
+
+    let replyToId = null;
+    let currentCommentCount = 0;
+    let isSubmitting = false;
+
+    function initThread() {
+        if(!pid) return;
+        db.ref('posts/'+pid+'/views').transaction(v => (v || 0) + 1);
+        
+        db.ref('comments/'+pid).on('value', s => {
+            const data = s.val() || {};
+            currentCommentCount = Object.keys(data).length;
+            renderComments(data);
+        });
+
+        db.ref('posts/'+pid).on('value', snap => {
+            const p = snap.val(); if(!p) return;
+            renderMainPost(p);
+        });
+    }
+
+    function renderMainPost(p) {
+        const vCount = p.verifyCount || 0;
+        let badges = '';
+        if(p.verifiedByGG) badges += `<span class="badge b-gg">Verified by Gossip Girl 💋</span>`;
+        if (Date.now() - (p.date || 0) < 43200000) badges += `<span class="badge b-new">New</span>`;
+        if(vCount >= 100) badges += `<span class="badge b-new" style="background:#fff; color:#000;">Confirmed</span>`;
+        if (currentCommentCount >= 20) badges += `<span class="badge b-hot">The Hottest Tea</span>`;
+
+        const hasVerified = p.verifiers && p.verifiers[myUid];
+        const area = document.getElementById('postArea');
+        if(!area) return;
+
+        area.innerHTML = `
+            <div id="captureArea" class="liquid-card post-box" style="padding:25px; border-radius:40px;">
+                ${badges ? `<div style="margin-bottom:12px; display:flex; flex-wrap:wrap;">${badges}</div>` : ''}
+                <div style="display:flex; gap:12px; align-items:center; margin-bottom:20px;">
+                    <div style="width:38px; height:38px; background:rgba(212,175,55,0.05); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:16px; border:1px solid var(--glass-border); color:var(--pink); font-weight:800;">?</div>
+                    <div style="flex:1">
+                        <div style="display:flex; align-items:center;">
+                            <div style="font-weight:800; font-size:14px;">Anonymous User</div>
+                            ${vCount > 0 ? `<div class="v-indicator">${vCount}</div>` : ''}
+                        </div>
+                        <div style="font-size:10px; opacity:0.4; font-weight:700;">${timeAgo(p.date)}</div>
+                    </div>
+                </div>
+                <div style="font-size:18px; line-height:1.5; margin-bottom:20px; color:rgba(255,255,255,0.95); font-weight:500;">${p.text}</div>
+                ${p.image ? `<img src="${p.image}" style="width:100%; border-radius:25px; margin-bottom:20px; border:1px solid var(--glass-border);">`:''}
+                <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--glass-border); padding-top:20px;">
+                     <div style="font-size:10px; color:var(--pink); font-weight:800; opacity:0.6;">👁 ${p.views || 0} VIEWS</div>
+                     <div style="display:flex; gap:8px;">
+                        <button class="verify-btn ${hasVerified || p.verifiedByGG ?'active':''}" onclick="toggleVerify()">VERIFY</button>
+                        <button class="share-btn" onclick="shareTip()">SHARE</button>
+                     </div>
+                </div>
+            </div>`;
+    }
+
+    window.toggleVerify = function() {
+        if(!pid) return;
+        const ref = db.ref('posts/'+pid);
+        ref.transaction(p => {
+            if(p) {
+                if(IS_GG) {
+                    p.verifiedByGG = true;
+                } else {
+                    p.verifiers = p.verifiers || {};
+                    if(p.verifiers[myUid]) {
+                        delete p.verifiers[myUid];
+                        p.verifyCount = Math.max(0, (p.verifyCount || 1) - 1);
+                    } else {
+                        p.verifiers[myUid] = true;
+                        p.verifyCount = (p.verifyCount || 0) + 1;
+                    }
+                }
+            }
+            return p;
+        });
+    };
+
+    function renderComments(data) {
+        const feed = document.getElementById('cFeed');
+        const cCountDisplay = document.getElementById('commentCount');
+        if(!feed || !cCountDisplay) return;
+
+        const mainC = [], replies = {};
+        Object.keys(data).forEach(k => {
+            const c = data[k]; c.id = k;
+            if(c.replyTo) (replies[c.replyTo] = replies[c.replyTo] || []).push(c);
+            else mainC.push(c);
+        });
+
+        cCountDisplay.innerText = Object.keys(data).length;
+        feed.innerHTML = mainC.sort((a,b) => b.date - a.date).map(c => {
+            let replyHTML = '';
+            if(replies[c.id]) {
+                replyHTML = `<div style="margin-left:20px; margin-top:10px; border-left:1.5px solid var(--glass-border); padding-left:15px;">` + 
+                    replies[c.id].map(r => `
+                        <div class="liquid-card" style="padding:15px; margin-bottom:8px; border-radius:20px; background:rgba(255,255,255,0.02); backdrop-filter:none;">
+                            <div style="font-weight:800; font-size:11px; color:var(--pink); margin-bottom:4px;">Anonymous</div>
+                            <div style="font-size:14px; opacity:0.9;">${r.text}</div>
+                        </div>`).join('') + `</div>`;
+            }
+            return `
+            <div class="comment-swipe-zone" id="wrap-${c.id}">
+                <div class="liquid-card main-card" style="padding:22px; position:relative; z-index:2; will-change: transform;">
+                    <div style="display:flex; gap:12px; margin-bottom:12px; align-items:center;">
+                        <div style="width:34px; height:34px; background:rgba(212,175,55,0.05); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; border:1px solid var(--glass-border); color:var(--pink); font-weight:800;">?</div>
+                        <div style="flex:1">
+                            <div style="font-weight:800; font-size:13px; color:var(--pink);">Anonymous</div>
+                            <div style="font-size:9px; opacity:0.4;">${timeAgo(c.date)}</div>
+                        </div>
+                    </div>
+                    <div style="font-size:16px; line-height:1.4;">${c.text}</div>
+                </div>
+                ${replyHTML}
+            </div>`;
+        }).join('');
+        mainC.forEach(c => setupSwipe(c.id));
+    }
+
+    function setupSwipe(cid) {
+        const row = document.getElementById(`wrap-${cid}`);
+        const card = row?.querySelector('.main-card');
+        if(!row || !card) return;
+        let startX = 0, startY = 0, isScrolling = false, isSwiping = false;
+
+        row.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+            isScrolling = false;
+            isSwiping = false;
+        }, {passive: true});
+
+        row.addEventListener('touchmove', (e) => {
+            const diffX = startX - e.touches[0].clientX;
+            const diffY = Math.abs(startY - e.touches[0].clientY);
+            
+            if (!isScrolling && !isSwiping) {
+                if (diffY > 10) isScrolling = true;
+                else if (diffX > 10) isSwiping = true;
+            }
+
+            if (isSwiping && diffX > 0) {
+                card.style.transform = `translateX(-${Math.min(diffX, 80)}px)`;
+                if(diffX > 70 && replyToId !== cid) {
+                    replyToId = cid; 
+                    document.getElementById('replyBanner').style.display = 'flex';
+                    if(window.navigator.vibrate) window.navigator.vibrate(10);
+                }
+            }
+        }, {passive: true});
+
+        row.addEventListener('touchend', () => {
+            card.style.transition = 'transform 0.4s var(--ios-spring)';
+            card.style.transform = `translateX(0px)`;
+            setTimeout(() => card.style.transition = '', 400);
+        }, {passive: true});
+    }
+
+    window.shareTip = function() {
+        const cap = document.getElementById('captureArea');
+        html2canvas(cap, { backgroundColor: '#000', scale: 2, useCORS: true }).then(canvas => {
+            canvas.toBlob(blob => {
+                const file = new File([blob], 'spotted.png', { type: 'image/png' });
+                const text = "Spotted! Gossip Girl has new tea.. \n\n" + window.location.href;
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    navigator.share({ files: [file], title: 'Gossip Girl', text: text });
+                } else {
+                    navigator.share({ title: 'Gossip Girl', text: text });
+                }
+            });
+        });
+    };
+
+    document.getElementById('cb').onclick = () => {
+        if(isSubmitting) return;
+        const input = document.getElementById('ci');
+        const txt = input.value.trim();
+        if(txt && pid) {
+            isSubmitting = true;
+            db.ref('comments/'+pid).push({ 
+                text: txt, 
+                date: firebase.database.ServerValue.TIMESTAMP, 
+                replyTo: replyToId 
+            }).then(() => { 
+                input.value = ''; 
+                cancelReply(); 
+                isSubmitting = false; 
+            });
+        }
+    };
+
+    window.cancelReply = function() { replyToId = null; document.getElementById('replyBanner').style.display = 'none'; };
+    
+    function timeAgo(t) {
+        if(!t) return 'now';
+        const s = Math.floor((Date.now() - t) / 1000);
+        if(s < 30) return 'now';
+        if(s < 60) return 'just now';
+        if(s < 3600) return Math.floor(s/60) + 'm ago';
+        if(s < 86400) return Math.floor(s/3600) + 'h ago';
+        return Math.floor(s/86400) + 'd ago';
+    }
+    initThread();
+})();
+</script>
+</body>
+</html>
