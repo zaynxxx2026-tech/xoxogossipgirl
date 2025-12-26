@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Admin • Control Center</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=0" />
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..900;1,6..96,400..900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --gold-primary: #D4AF37;
+            --gold-dim: #8C701B;
+            --red-neon: #FF3B30;
+            --green-neon: #34C759;
+            --glass-surface: rgba(30, 30, 30, 0.70);
+            --glass-border: rgba(255, 255, 255, 0.12);
+            --glass-highlight: rgba(255, 255, 255, 0.2);
+            --glass-shadow: 0 20px 40px -10px rgba(0,0,0,0.9);
+            --bg-dark: #000000;
+            --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.15);
+        }
+        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; -webkit-tap-highlight-color: transparent; }
+        @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+        @keyframes liquidReveal { 0% { opacity:0; transform:translateY(20px) scale(.98); filter: blur(10px); } 100% { opacity:1; transform:none; filter:none; } }
+        body { background: var(--bg-dark); color:#fff; margin:0; background-image: radial-gradient(circle at 50% 0%, rgba(212,175,55,0.15) 0%, transparent 60%), linear-gradient(to bottom,#111 0%,#000 100%); background-attachment: fixed; -webkit-font-smoothing:antialiased; padding-bottom:100px; animation: liquidReveal 0.45s var(--ease-spring) both; }
+        .liquid-card { background: var(--glass-surface); backdrop-filter: blur(35px) saturate(180%); -webkit-backdrop-filter: blur(35px) saturate(180%); border:1px solid var(--glass-border); border-top:1px solid var(--glass-highlight); border-radius:32px; box-shadow:var(--glass-shadow); position:relative; overflow:hidden; transition: transform .28s var(--ease-spring); }
+        header { position: sticky; top:0; padding:15px 24px; background: rgba(10,10,10,0.8); backdrop-filter: blur(40px); border-bottom:1px solid rgba(255,255,255,0.08); display:flex; justify-content:space-between; align-items:center; z-index:1000; }
+        .container { max-width: 720px; margin: 0 auto; padding: 25px; }
+        .exit-link { color: rgba(255,255,255,0.6); font-weight:700; text-decoration:none; font-size:10px; letter-spacing:1px; text-transform:uppercase; padding:8px 16px; background:rgba(255,255,255,0.05); border-radius:20px; }
+        .admin-title { font-family:'Bodoni Moda', serif; font-style:italic; font-weight:800; font-size:22px; color:var(--gold-primary); text-shadow: 0 0 20px rgba(212,175,55,0.3); flex:1; text-align:center; margin-right:40px; }
+        .tabs { display:flex; gap:4px; margin-bottom:30px; background: rgba(255,255,255,0.08); padding:4px; border-radius:100px; border:1px solid rgba(255,255,255,0.05); }
+        .tab-btn { flex:1; padding:10px; border-radius:100px; border:none; background:transparent; color:rgba(255,255,255,0.5); font-weight:700; font-size:11px; cursor:pointer; text-transform:uppercase; letter-spacing:0.5px; transition:.2s; }
+        .tab-btn.active { background: rgba(255,255,255,0.14); color:#fff; box-shadow:0 2px 10px rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); }
+        .btn-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+        .btn { height:44px; border-radius:14px; border:none; font-weight:800; cursor:pointer; font-size:11px; text-transform:uppercase; letter-spacing:1px; display:flex; align-items:center; justify-content:center; transition:opacity .2s; }
+        .btn:disabled { opacity:.5; cursor:not-allowed; }
+        .btn-pub { background: rgba(52,199,89,0.15); color: var(--green-neon); border:1px solid rgba(52,199,89,0.4); }
+        .btn-burn { background: rgba(255,59,48,0.15); color: var(--red-neon); border:1px solid rgba(255,59,48,0.4); }
+        .btn-ghost { background: rgba(255,255,255,0.03); color: rgba(255,255,255,0.6); border:1px solid var(--glass-border); }
+        .tip-editor { width:100%; background: rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); color:#fff; font-size:15px; line-height:1.5; resize:none; padding:12px; border-radius:14px; outline:none; margin-bottom:12px; min-height:44px; overflow:hidden; transition:.2s; direction: ltr; unicode-bidi: plaintext; text-align: left; }
+        .tip-image-wrapper { width:100%; position:relative; padding-top:75%; margin-bottom:16px; border-radius:20px; overflow:hidden; border:1px solid var(--glass-border); cursor:pointer; }
+        .tip-image-preview { position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; }
+        dialog { border:none; padding:0; background:transparent; width:100vw; height:100vh; max-width:100vw; max-height:100vh; display:none; align-items:center; justify-content:center; overflow:hidden; position:fixed; top:0; left:0; z-index:2000; }
+        dialog[open] { display:flex; }
+        dialog::backdrop { background: rgba(0,0,0,0.85); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); }
+        .dialog-content { width:100%; max-width:360px; margin:auto; animation: liquidReveal .35s var(--ease-spring); }
+        #lightbox-dialog .dialog-content { max-width:95vw; display:flex; justify-content:center; }
+        #lightbox-dialog img { max-width:100%; max-height:90vh; border-radius:16px; box-shadow: 0 0 50px rgba(0,0,0,1); }
+        .stat-group { display:flex; gap:15px; }
+        .stat-item { font-size:10px; color: var(--gold-primary); font-weight:700; }
+        .empty-state { text-align:center; opacity:.28; padding:60px 12px; color:var(--gold-primary); font-weight:600; letter-spacing:1px; }
+
+        /* RTL / bidi helper classes (applied only to user-generated content) */
+        .rtl-text { direction: rtl; unicode-bidi: isolate; text-align: right; }
+        .ltr-text { direction: ltr; unicode-bidi: plaintext; text-align: left; }
+        .bidi-auto { unicode-bidi: isolate; } /* used with dir="auto" for mixed content */
+
+        /* ensure we don't break layout when switching directions */
+        .liquid-card .rtl-text,
+        .liquid-card .ltr-text,
+        .liquid-card .bidi-auto {
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <a href="index.html" class="exit-link" id="exitLink">Exit</a>
+    <div class="admin-title" aria-live="polite">Control Center</div>
+</header>
+
+<main class="container" id="app">
+    <div class="tabs" role="tablist" aria-label="Admin tabs">
+        <button class="tab-btn active" id="tabPending" role="tab" aria-selected="true">Pending Tips</button>
+        <button class="tab-btn" id="tabLive" role="tab" aria-selected="false">Live Feed</button>
+    </div>
+
+    <section id="pendingSection" aria-labelledby="tabPending">
+        <div id="massActionContainer" class="btn-row" style="margin-bottom:20px; display:none;">
+            <button class="btn btn-burn" id="massBurnBtn" type="button">Burn All</button>
+            <button class="btn btn-pub" id="massPubBtn" type="button">BLAST ALL</button>
+        </div>
+        <div id="pendingFeed" aria-live="polite"></div>
+    </section>
+
+    <section id="liveSection" style="display:none;" aria-labelledby="tabLive">
+        <div id="liveFeed" aria-live="polite"></div>
+    </section>
+</main>
+
+<dialog id="delete-dialog" aria-modal="true" role="dialog">
+    <div class="dialog-content">
+        <div class="liquid-card" style="padding:35px; text-align:center;">
+            <h2 style="color:var(--red-neon); font-weight:800; margin:0 0 20px 0;">Delete Tip?</h2>
+            <p style="color:rgba(255,255,255,0.7); margin-bottom:18px;">This will permanently remove the tip from the live feed and its comments.</p>
+            <div class="btn-row">
+                <button class="btn btn-ghost" id="cancelDeleteBtn">Cancel</button>
+                <button class="btn btn-burn" id="confirmDeleteBtn">Delete</button>
+            </div>
+        </div>
+    </div>
+</dialog>
+
+<dialog id="mass-blast-dialog" aria-modal="true" role="dialog">
+    <div class="dialog-content">
+        <div class="liquid-card" style="padding:35px; text-align:center;">
+            <h2 style="color:var(--green-neon); font-weight:800; margin:0 0 18px 0;">Blast All Tips?</h2>
+            <p style="color:rgba(255,255,255,0.7); margin-bottom:18px;">This will publish every pending tip to the live feed immediately.</p>
+            <div class="btn-row">
+                <button class="btn btn-ghost" id="cancelMassPub">Cancel</button>
+                <button class="btn btn-pub" id="confirmMassPubBtn">Blast All</button>
+            </div>
+        </div>
+    </div>
+</dialog>
+
+<dialog id="mass-burn-dialog" aria-modal="true" role="dialog">
+    <div class="dialog-content">
+        <div class="liquid-card" style="padding:35px; text-align:center;">
+            <h2 style="color:var(--red-neon); font-weight:800; margin:0 0 18px 0;">Burn All Tips?</h2>
+            <p style="color:rgba(255,255,255,0.7); margin-bottom:18px;">This will permanently delete all pending tips.</p>
+            <div class="btn-row">
+                <button class="btn btn-ghost" id="cancelMassBurn">Cancel</button>
+                <button class="btn btn-burn" id="confirmMassBurnBtn">Burn All</button>
+            </div>
+        </div>
+    </div>
+</dialog>
+
+<dialog id="lightbox-dialog" aria-modal="true" role="dialog">
+    <div class="dialog-content" id="lightboxContent">
+        <img src="" id="lightboxImg" alt="Preview">
+    </div>
+</dialog>
+
+<script>
+/* Admin page - hardened & defensive
+   Non-destructive: preserves all IDs, classes, and markup.
+   Improvements:
+   - Non-stateful Arabic regex (no global flag)
+   - Defensive Firebase init (no crashes if SDK blocked)
+   - requestIdleCallback-based initialization to avoid blocking first paint
+   - Safer listeners, controlled parallelism for mass ops
+   - Dialog polyfills / focus management
+   - Image compression + safe upload flow
+   - Apply bidi only to user content (no UI changes)
+*/
+
+(function(){
+    'use strict';
+
+    // Utility helpers
+    function escapeHTML(s) {
+        if (s === null || s === undefined) return '';
+        return String(s)
+            .replace(/&/g,'&amp;')
+            .replace(/</g,'&lt;')
+            .replace(/>/g,'&gt;')
+            .replace(/"/g,'&quot;')
+            .replace(/'/g,'&#039;')
+            .replace(/\//g,'&#x2F;');
+    }
+    function sanitizeId(s) {
+        return String(s || '').replace(/[^a-zA-Z0-9-_:.]/g,'_');
+    }
+    function safeNumber(n){ const v = Number(n); return isNaN(v) ? 0 : v; }
+
+    // --- RTL detection & helpers ---
+    // IMPORTANT: non-global regex to avoid stateful .test issues
+    const arabicRegex = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
+    const latinOrNumberRegex = /[A-Za-z0-9]/;
+
+    function countMatches(re, s) {
+        if (!s) return 0;
+        const m = s.match(new RegExp(re.source, 'g'));
+        return m ? m.length : 0;
+    }
+
+    function decideDirectionForText(s) {
+        if (!s) return 'ltr';
+        const arabicCount = countMatches(arabicRegex, s);
+        if (arabicCount === 0) return 'ltr';
+        const latinCount = countMatches(latinOrNumberRegex, s);
+        if (latinCount === 0) return 'rtl';
+        const total = (s.length) || (arabicCount + latinCount);
+        if (total > 0 && (arabicCount / total) > 0.5) return 'rtl';
+        return 'auto';
+    }
+
+    function applyDirectionToElement(el, text) {
+        const decision = decideDirectionForText(text);
+        el.classList.remove('rtl-text', 'ltr-text', 'bidi-auto');
+
+        if (decision === 'rtl') {
+            el.setAttribute('dir', 'rtl');
+            el.classList.add('rtl-text');
+        } else if (decision === 'ltr') {
+            el.setAttribute('dir', 'ltr');
+            el.classList.add('ltr-text');
+        } else {
+            el.setAttribute('dir', 'auto');
+            el.classList.add('bidi-auto');
+        }
+    }
+
+    // Firebase (defensive)
+    const firebaseConfig = {
+        apiKey: "AIzaSyCTdVcJspQxXiq_Kd7ImL32xWsjv0HgENE",
+        authDomain: "gossip-girl-4c9f2.firebaseapp.com",
+        projectId: "gossip-girl-4c9f2",
+        databaseURL: "https://gossip-girl-4c9f2-default-rtdb.firebaseio.com"
+    };
+    let db = null;
+
+    function initFirebaseIfNeeded() {
+        try {
+            if (typeof firebase !== 'undefined' && firebase && typeof firebase.initializeApp === 'function') {
+                if (!firebase.apps || !firebase.apps.length) firebase.initializeApp(firebaseConfig);
+                db = firebase.database();
+                return true;
+            } else {
+                // If scripts are blocked, attempt a fallback dynamic load (non-blocking)
+                // NOTE: We do not remove or change the original script tags loaded in <head>.
+                return false;
+            }
+        } catch (err) {
+            console.warn('Firebase init defensive catch', err);
+            return false;
+        }
+    }
+
+    // attempt immediate init (works if head scripts loaded)
+    initFirebaseIfNeeded();
+
+    // run non-critical work when idle
+    function runWhenIdle(fn) {
+        if ('requestIdleCallback' in window) requestIdleCallback(fn, {timeout: 1000});
+        else setTimeout(fn, 400);
+    }
+
+    // Elements (kept as original IDs)
+    const tabPending = document.getElementById('tabPending');
+    const tabLive = document.getElementById('tabLive');
+    const pendingSection = document.getElementById('pendingSection');
+    const liveSection = document.getElementById('liveSection');
+    const pendingFeed = document.getElementById('pendingFeed');
+    const liveFeed = document.getElementById('liveFeed');
+    const massActionContainer = document.getElementById('massActionContainer');
+    const massBurnBtn = document.getElementById('massBurnBtn');
+    const massPubBtn = document.getElementById('massPubBtn');
+
+    const deleteDialog = document.getElementById('delete-dialog');
+    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+    const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+
+    const massBlastDialog = document.getElementById('mass-blast-dialog');
+    const massBurnDialog = document.getElementById('mass-burn-dialog');
+    const confirmMassPubBtn = document.getElementById('confirmMassPubBtn');
+    const confirmMassBurnBtn = document.getElementById('confirmMassBurnBtn');
+    const cancelMassPub = document.getElementById('cancelMassPub');
+    const cancelMassBurn = document.getElementById('cancelMassBurn');
+
+    const lightboxDialog = document.getElementById('lightbox-dialog');
+    const lightboxImg = document.getElementById('lightboxImg');
+
+    let currentTipsData = {};
+    let currentPostsData = {};
+    let toDeleteId = null;
+    let isProcessing = false;
+
+    // Tab switching (accessible)
+    function switchTab(tab) {
+        const isPending = tab === 'pending';
+        pendingSection.style.display = isPending ? 'block' : 'none';
+        liveSection.style.display = isPending ? 'none' : 'block';
+        tabPending.classList.toggle('active', isPending);
+        tabLive.classList.toggle('active', !isPending);
+        tabPending.setAttribute('aria-selected', isPending ? 'true' : 'false');
+        tabLive.setAttribute('aria-selected', isPending ? 'false' : 'true');
+    }
+    tabPending.addEventListener('click', () => switchTab('pending'));
+    tabLive.addEventListener('click', () => switchTab('live'));
+
+    // Dialog open/close helpers with safe polyfill
+    function openDialog(dialog) {
+        try {
+            if (typeof dialog.showModal === 'function') dialog.showModal();
+            else { dialog.setAttribute('open',''); dialog.style.display = 'flex'; }
+            // focus inside
+            const focusable = dialog.querySelector('button, [tabindex]:not([tabindex="-1"])');
+            if (focusable) focusable.focus();
+        } catch (e) {
+            try { dialog.setAttribute('open',''); } catch(e){}
+        }
+    }
+    function closeDialog(dialog) {
+        try {
+            if (typeof dialog.close === 'function') dialog.close();
+            else { dialog.removeAttribute('open'); dialog.style.display = 'none'; }
+        } catch (e) { try { dialog.removeAttribute('open'); } catch(e){} }
+    }
+
+    // Lightbox
+    function openLightbox(src) {
+        try {
+            lightboxImg.src = src || '';
+            openDialog(lightboxDialog);
+        } catch (e) {}
+    }
+    function closeLightbox() {
+        try { lightboxImg.src = ''; closeDialog(lightboxDialog); } catch(e){}
+    }
+    lightboxDialog.addEventListener('click', (e) => { if (e.target === lightboxDialog) closeLightbox(); });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            try {
+                if (lightboxDialog.hasAttribute('open')) closeLightbox();
+                if (deleteDialog.hasAttribute('open')) closeDialog(deleteDialog);
+                if (massBlastDialog.hasAttribute('open')) closeDialog(massBlastDialog);
+                if (massBurnDialog.hasAttribute('open')) closeDialog(massBurnDialog);
+            } catch(e){}
+        }
+    });
+
+    // Image compression (client-side) - best-effort
+    function compressImage(base64Str) {
+        return new Promise((resolve) => {
+            if (!base64Str || !base64Str.startsWith('data:image')) return resolve(base64Str);
+            const img = new Image();
+            img.onload = () => {
+                try {
+                    const max = 1200;
+                    let width = img.width;
+                    let height = img.height;
+                    if (width > height) { if (width > max) { height *= max / width; width = max; } }
+                    else { if (height > max) { width *= max / height; height = max; } }
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width; canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    resolve(canvas.toDataURL('image/jpeg', 0.78));
+                } catch (e) { resolve(base64Str); }
+            };
+            img.onerror = () => resolve(base64Str);
+            img.src = base64Str;
+        });
+    }
+
+    // Render helpers: build DOM nodes (safe)
+    function renderPending(data) {
+        currentTipsData = data || {};
+        const keys = Object.keys(currentTipsData).reverse();
+        pendingFeed.innerHTML = '';
+        if (keys.length === 0) {
+            pendingFeed.appendChild(createEmptyNode('No pending tips...'));
+            massActionContainer.style.display = 'none';
+            return;
+        }
+        massActionContainer.style.display = keys.length > 1 ? 'grid' : 'none';
+
+        keys.forEach(id => {
+            const item = currentTipsData[id] || {};
+            const wrapper = document.createElement('div');
+            wrapper.className = 'liquid-card';
+            wrapper.style.padding = '20px';
+            wrapper.style.marginBottom = '18px';
+            wrapper.style.animation = 'liquidReveal .35s var(--ease-spring)';
+
+            // image preview
+            if (item.image) {
+                const imgWrap = document.createElement('div');
+                imgWrap.className = 'tip-image-wrapper';
+                imgWrap.style.cursor = 'pointer';
+                const img = document.createElement('img');
+                img.className = 'tip-image-preview';
+                img.alt = 'tip image';
+                img.loading = 'lazy';
+                try { img.src = item.image; } catch(e){ img.src = ''; }
+                imgWrap.appendChild(img);
+                imgWrap.addEventListener('click', () => openLightbox(item.image));
+                wrapper.appendChild(imgWrap);
+            }
+
+            // editor
+            const ta = document.createElement('textarea');
+            ta.className = 'tip-editor';
+            ta.id = 'edit-' + sanitizeId(id);
+            ta.value = item.text || '';
+            ta.placeholder = 'Tip content...';
+            ta.spellcheck = false;
+
+            // initial direction decision
+            ta.setAttribute('dir', 'auto');
+            applyDirectionToElement(ta, ta.value);
+
+            ta.addEventListener('input', () => {
+                ta.style.height = 'auto';
+                ta.style.height = ta.scrollHeight + 'px';
+                applyDirectionToElement(ta, ta.value);
+            });
+            wrapper.appendChild(ta);
+
+            const btnRow = document.createElement('div');
+            btnRow.className = 'btn-row';
+            btnRow.style.marginTop = '8px';
+
+            const burnBtn = document.createElement('button');
+            burnBtn.className = 'btn btn-burn';
+            burnBtn.type = 'button';
+            burnBtn.textContent = 'Burn';
+            burnBtn.addEventListener('click', () => openDeleteConfirmForTip(id));
+            btnRow.appendChild(burnBtn);
+
+            const pubBtn = document.createElement('button');
+            pubBtn.className = 'btn btn-pub';
+            pubBtn.type = 'button';
+            pubBtn.textContent = 'BLAST';
+            pubBtn.addEventListener('click', () => publishTip(id));
+            btnRow.appendChild(pubBtn);
+
+            wrapper.appendChild(btnRow);
+            pendingFeed.appendChild(wrapper);
+
+            // auto expand
+            setTimeout(()=> { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; }, 30);
+        });
+    }
+
+    function renderLive(data) {
+        currentPostsData = data || {};
+        const keys = Object.keys(currentPostsData).reverse();
+        liveFeed.innerHTML = '';
+        if (keys.length === 0) {
+            liveFeed.appendChild(createEmptyNode('No tips are live...'));
+            return;
+        }
+
+        keys.forEach(id => {
+            const item = currentPostsData[id] || {};
+            const wrapper = document.createElement('div');
+            wrapper.className = 'liquid-card';
+            wrapper.style.padding = '20px';
+            wrapper.style.marginBottom = '12px';
+
+            if (item.image) {
+                const imgWrap = document.createElement('div');
+                imgWrap.className = 'tip-image-wrapper';
+                const img = document.createElement('img');
+                img.className = 'tip-image-preview';
+                img.alt = 'post image';
+                try { img.src = item.image; } catch(e){ img.src = ''; }
+                img.loading = 'lazy';
+                imgWrap.appendChild(img);
+                imgWrap.addEventListener('click', () => openLightbox(item.image));
+                wrapper.appendChild(imgWrap);
+            }
+
+            const textDiv = document.createElement('div');
+            textDiv.style.fontSize = '14px';
+            textDiv.style.marginBottom = '12px';
+            textDiv.style.opacity = '0.95';
+            textDiv.style.lineHeight = '1.5';
+            textDiv.style.whiteSpace = 'pre-wrap';
+            textDiv.textContent = item.text || '';
+            applyDirectionToElement(textDiv, item.text || '');
+            wrapper.appendChild(textDiv);
+
+            const footer = document.createElement('div');
+            footer.style.display = 'flex';
+            footer.style.justifyContent = 'space-between';
+            footer.style.alignItems = 'center';
+            footer.style.borderTop = '1px solid rgba(255,255,255,0.05)';
+            footer.style.paddingTop = '12px';
+
+            const statGroup = document.createElement('div');
+            statGroup.className = 'stat-group';
+            const s1 = document.createElement('span'); s1.className = 'stat-item'; s1.textContent = '👁 ' + safeNumber(item.views);
+            const s2 = document.createElement('span'); s2.className = 'stat-item'; s2.textContent = '💬 ' + safeNumber(item.commentCount);
+            const s3 = document.createElement('span'); s3.className = 'stat-item'; s3.textContent = '✅ ' + safeNumber(item.verifyCount);
+            statGroup.appendChild(s1); statGroup.appendChild(s2); statGroup.appendChild(s3);
+            footer.appendChild(statGroup);
+
+            const delBtn = document.createElement('button');
+            delBtn.className = 'btn btn-burn';
+            delBtn.style.height = '32px';
+            delBtn.style.fontSize = '9px';
+            delBtn.textContent = 'DELETE';
+            delBtn.addEventListener('click', () => openDeleteConfirmForPost(id));
+            footer.appendChild(delBtn);
+
+            wrapper.appendChild(footer);
+            liveFeed.appendChild(wrapper);
+        });
+    }
+
+    function createEmptyNode(text) {
+        const n = document.createElement('div');
+        n.className = 'empty-state';
+        n.textContent = text;
+        return n;
+    }
+
+    // Confirm delete handlers
+    function openDeleteConfirmForTip(id) {
+        toDeleteId = { type: 'tip', id: id };
+        openDialog(deleteDialog);
+    }
+    function openDeleteConfirmForPost(id) {
+        toDeleteId = { type: 'post', id: id };
+        openDialog(deleteDialog);
+    }
+
+    cancelDeleteBtn.addEventListener('click', () => { toDeleteId = null; closeDialog(deleteDialog); });
+
+    confirmDeleteBtn.addEventListener('click', async () => {
+        if (!toDeleteId || !db || isProcessing) { closeDialog(deleteDialog); return; }
+        isProcessing = true;
+        confirmDeleteBtn.disabled = true;
+        confirmDeleteBtn.textContent = '...';
+        try {
+            const t = toDeleteId;
+            if (t.type === 'tip') {
+                await db.ref('tips/' + t.id).remove();
+            } else {
+                await db.ref('posts/' + t.id).remove();
+                await db.ref('comments/' + t.id).remove();
+            }
+        } catch (e) { console.error('Delete failed', e); alert('Delete failed'); }
+        finally {
+            isProcessing = false;
+            confirmDeleteBtn.disabled = false;
+            confirmDeleteBtn.textContent = 'Delete';
+            toDeleteId = null;
+            closeDialog(deleteDialog);
+        }
+    });
+
+    // Publish single tip (edit allowed)
+    async function publishTip(id, bypassProcessingFlag = false) {
+        if (!db || (isProcessing && !bypassProcessingFlag)) return;
+        const ta = document.getElementById('edit-' + sanitizeId(id));
+        const text = ta ? ta.value.trim() : (currentTipsData[id]?.text || '');
+        const tip = currentTipsData[id] || {};
+        if (!text && !tip.image) { if (!bypassProcessingFlag) alert('Empty tip.'); return; }
+
+        if (!bypassProcessingFlag) isProcessing = true;
+        try {
+            let image = tip.image || '';
+            if (image && image.startsWith('data:image')) {
+                image = await compressImage(image);
+            }
+            await db.ref('posts').push({
+                text: text,
+                image: image || '',
+                date: firebase.database.ServerValue.TIMESTAMP,
+                views: 0,
+                verifyCount: 0,
+                commentCount: 0
+            });
+            await db.ref('tips/' + id).remove();
+        } catch (e) {
+            console.error('Publish failed', e);
+            if (!bypassProcessingFlag) alert('Blast failed.');
+        } finally {
+            if (!bypassProcessingFlag) isProcessing = false;
+        }
+    }
+
+    // Mass actions wiring
+    massPubBtn.addEventListener('click', () => openDialog(massBlastDialog));
+    massBurnBtn.addEventListener('click', () => openDialog(massBurnDialog));
+    cancelMassPub.addEventListener('click', () => closeDialog(massBlastDialog));
+    cancelMassBurn.addEventListener('click', () => closeDialog(massBurnDialog));
+
+    confirmMassPubBtn.addEventListener('click', async () => {
+        if (!db || isProcessing) return;
+        const keys = Object.keys(currentTipsData || {});
+        if (!keys.length) { closeDialog(massBlastDialog); return; }
+        isProcessing = true;
+        confirmMassPubBtn.disabled = true;
+        confirmMassPubBtn.textContent = '...';
+        try {
+            // sequential ops to avoid DB overload
+            for (const id of keys) {
+                await publishTip(id, true);
+                // small pause between ops
+                await new Promise(r => setTimeout(r, 120));
+            }
+        } catch (e) { console.error('Mass publish failed', e); alert('Some items failed'); }
+        finally {
+            isProcessing = false;
+            confirmMassPubBtn.disabled = false;
+            confirmMassPubBtn.textContent = 'Blast All';
+            closeDialog(massBlastDialog);
+        }
+    });
+
+    confirmMassBurnBtn.addEventListener('click', async () => {
+        if (!db || isProcessing) return;
+        const keys = Object.keys(currentTipsData || {});
+        if (!keys.length) { closeDialog(massBurnDialog); return; }
+        isProcessing = true;
+        confirmMassBurnBtn.disabled = true;
+        confirmMassBurnBtn.textContent = '...';
+        try {
+            // do removes in batches for stability
+            for (const id of keys) {
+                await db.ref('tips/' + id).remove();
+                await new Promise(r => setTimeout(r, 80));
+            }
+        } catch (e) { console.error('Mass burn failed', e); alert('Mass burn failed'); }
+        finally { isProcessing = false; confirmMassBurnBtn.disabled = false; confirmMassBurnBtn.textContent = 'Burn All'; closeDialog(massBurnDialog); }
+    });
+
+    // attach DB listeners in a defensive manner (retries + idle)
+    function attachDBListeners() {
+        if (!db) return;
+        try {
+            db.ref('tips').on('value', snapshot => {
+                const data = snapshot.val() || {};
+                try { renderPending(data); } catch(e){ console.error('renderPending fail', e); }
+            }, err => {
+                console.warn('tips listener error', err);
+                pendingFeed.innerHTML = '';
+                pendingFeed.appendChild(createEmptyNode('Unable to load pending tips.'));
+            });
+
+            db.ref('posts').on('value', snapshot => {
+                const data = snapshot.val() || {};
+                try { renderLive(data); } catch(e){ console.error('renderLive fail', e); }
+            }, err => {
+                console.warn('posts listener error', err);
+                liveFeed.innerHTML = '';
+                liveFeed.appendChild(createEmptyNode('Unable to load live feed.'));
+            });
+        } catch (e) {
+            console.warn('attachDBListeners caught', e);
+        }
+    }
+
+    // Try to initialize Firebase later if it wasn't available at load time
+    runWhenIdle(() => {
+        const ok = initFirebaseIfNeeded();
+        if (ok) attachDBListeners();
+        else {
+            // attempt dynamic load if head scripts were blocked
+            // but don't remove head tags — inject additional scripts as fallback
+            const urls = [
+                'https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js',
+                'https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js'
+            ];
+            let loaded = 0;
+            urls.forEach(u => {
+                const s = document.createElement('script');
+                s.src = u;
+                s.async = true;
+                s.onload = () => { loaded++; if (loaded === urls.length) { initFirebaseIfNeeded(); attachDBListeners(); } };
+                s.onerror = () => { loaded++; if (loaded === urls.length) { /* last resort: show offline */ pendingFeed.appendChild(createEmptyNode('Offline - Firebase scripts blocked.')); liveFeed.appendChild(createEmptyNode('Offline - Firebase scripts blocked.')); } };
+                document.head.appendChild(s);
+            });
+        }
+    });
+
+    // Keyboard handling for tab buttons (accessibility)
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') btn.click();
+        });
+    });
+
+    // Keep UI responsive: attempt minor re-sync when visible
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && db) {
+            // no heavy re-fetch but can re-init listeners if required
+            try { /* noop for now */ } catch(e){}
+        }
+    });
+
+    // Expose small API for debugging
+    window.adminDebug = { openLightbox, closeLightbox, publishTip };
+
+})();
+</script>
+</body>
+</html>

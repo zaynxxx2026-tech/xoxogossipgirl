@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>xoxo gossip girl</title>
+    <meta property="og:title" content="Gossip Girl | Spotted" />
+    <meta property="og:description" content="You know you love me. XOXO." />
+    <meta property="og:image" content="https://images.unsplash.com/photo-1540959733332-e94e270b2d42?q=80&w=1000&auto=format&fit=crop" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+
+    <!-- Performance: preconnect to fonts + image host -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..900;1,6..96,400..900&display=swap" rel="stylesheet">
+
+    <style>
+        /* A. The "Smooth Scroll" Fix */
+        html { scroll-behavior: smooth; }
+
+        :root {
+            /* iOS 26 Liquid Palette */
+            --gold-primary: #D4AF37;
+            --gold-light: #F2D06B;
+            --gold-dark: #8C701B;
+            --pink-neon: #FF007F;
+
+            /* Glass Variables */
+            --glass-surface: rgba(20, 20, 20, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.12);
+            --glass-highlight: rgba(255, 255, 255, 0.15);
+            --glass-shadow: 0 20px 40px -10px rgba(0,0,0,0.8);
+
+            /* Gradients */
+            --liquid-gold: linear-gradient(135deg, #BF953F 0%, #FCF6BA 40%, #B38728 60%, #AA771C 100%);
+            --liquid-dark: linear-gradient(180deg, rgba(30,30,30,0.8) 0%, rgba(10,10,10,0.9) 100%);
+
+            /* Physics */
+            --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.15); /* Bouncy */
+            --ease-silk: cubic-bezier(0.25, 0.1, 0.25, 1); /* Smooth */
+        }
+
+        /* Reset & Base Typography */
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro", "SF Arabic", "Segoe UI", Roboto, sans-serif;
+            letter-spacing: -0.02em;
+        }
+
+        body {
+            background: #000;
+            color: #fff;
+            margin: 0;
+            background-image:
+                radial-gradient(circle at 10% 20%, rgba(212, 175, 55, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(255, 0, 127, 0.06) 0%, transparent 40%),
+                linear-gradient(to bottom, #050505, #000000);
+            background-attachment: fixed;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            padding-bottom: env(safe-area-inset-bottom);
+            overscroll-behavior-y: none;
+        }
+
+        /* Respect reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+        }
+
+        /* --- Animations --- */
+        @keyframes liquidReveal {
+            0% { opacity: 0; transform: translateY(40px) scale(0.96); filter: blur(10px); }
+            100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+        }
+
+        @keyframes titleReveal {
+            0% { opacity: 0; filter: blur(15px); }
+            100% { opacity: 1; filter: blur(0); }
+        }
+
+        @keyframes shimmerText {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes glowPulse {
+            0% { box-shadow: 0 0 5px rgba(212, 175, 55, 0.2); }
+            50% { box-shadow: 0 0 20px rgba(212, 175, 55, 0.5), 0 0 10px var(--gold-primary); }
+            100% { box-shadow: 0 0 5px rgba(212, 175, 55, 0.2); }
+        }
+
+        /* --- Components --- */
+
+        .liquid-card {
+            background: var(--glass-surface);
+            backdrop-filter: blur(40px) saturate(180%);
+            -webkit-backdrop-filter: blur(40px) saturate(180%);
+            border: 1px solid var(--glass-border);
+            border-top: 1px solid var(--glass-highlight);
+            border-bottom: 1px solid rgba(0,0,0,0.5);
+            border-radius: 36px;
+            box-shadow: var(--glass-shadow);
+            transition: transform 0.3s var(--ease-silk), box-shadow 0.3s ease;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+            will-change: transform;
+        }
+
+        /* Header */
+        header {
+            position: fixed; top: 0; width: 100%; z-index: 1000; padding: 20px 0;
+            display: flex; justify-content: center;
+            pointer-events: none;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%);
+            backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+            mask-image: linear-gradient(to bottom, black 0%, black 50%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, black 0%, black 50%, transparent 100%);
+        }
+
+        .branding {
+            text-align: center; pointer-events: auto; user-select: none;
+            transition: transform 0.6s var(--ease-silk), opacity 0.6s ease;
+            transform-origin: top center;
+            padding: 10px 20px;
+            opacity: 0;
+            animation: titleReveal 1.5s ease-out forwards;
+            animation-delay: 0.8s;
+        }
+
+        .branding.scrolled { transform: scale(0.7) translateY(-5px); opacity: 0.9; }
+
+        .title {
+            font-family: 'Bodoni Moda', serif !important;
+            font-size: 52px; font-weight: 800; letter-spacing: -1px; margin: 0; line-height: 1.3;
+            font-style: italic;
+            background: var(--liquid-gold);
+            background-size: 200% auto;
+            color: transparent;
+            background-clip: text; -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shimmerText 5s linear infinite;
+            filter: drop-shadow(0 0 15px rgba(212, 175, 55, 0.3));
+            cursor: pointer;
+            display: inline-block;
+            padding: 0 15px;
+        }
+
+        .subtitle {
+            font-size: 8px; color: var(--gold-light); font-weight: 600; margin-top: 10px;
+            letter-spacing: 1.5px; text-transform: uppercase; opacity: 0.9;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            text-shadow: 0 0 10px rgba(0,0,0,0.8);
+        }
+        .subtitle-fade { opacity: 0; transform: translateY(5px); }
+
+        /* Layout */
+        .container {
+            max-width: 500px; margin: 0 auto;
+            padding: 220px 20px 120px;
+            position: relative; z-index: 10; width: 100%;
+            animation: liquidReveal 1s var(--ease-silk) forwards;
+        }
+
+        /* Tip Header */
+        .tip-header { margin-bottom: 20px; padding-left: 8px; width: 100%; display: flex; flex-direction: column; }
+        .tip-header .main-tag {
+            color: #fff; font-size: 38px; font-weight: 800; letter-spacing: -1px;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+        .tip-header .sub-tag {
+            color: var(--gold-primary); font-size: 11px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1.5px; margin-top: 4px; opacity: 0.8;
+        }
+
+        /* Composer */
+        .composer {
+            padding: 20px !important; margin-bottom: 30px !important;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            box-shadow: 0 0 20px rgba(0,0,0,0.3), inset 0 0 20px rgba(212,175,55,0.05);
+        }
+
+        #tipIn {
+            font-size: 16px !important; min-height: 50px !important; margin-bottom: 15px !important; width: 100%;
+            background: rgba(0,0,0,0.2); border-radius: 18px; padding: 12px;
+            border: 1px solid transparent; color: #fff; outline: none; resize: none; overflow: hidden;
+            transition: background 0.3s, border-color 0.3s;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
+        }
+        #tipIn:focus { background: rgba(0,0,0,0.4); border-color: rgba(212,175,55,0.3); }
+        #tipIn::placeholder { color: rgba(255,255,255,0.3); font-weight: 500; transition: color 0.3s; }
+        #tipIn.error-placeholder::placeholder { color: #ff3b30 !important; }
+
+        /* RTL / Bidi helpers (new for Arabic support) */
+        /* unicode-bidi: plaintext defers to the first strong character and preserves mixed content */
+        .bidi { unicode-bidi: plaintext; white-space: pre-wrap; word-break: break-word; hyphens: auto; }
+        .bidi.rtl { direction: rtl; text-align: right; }
+        .bidi.ltr { direction: ltr; text-align: left; }
+
+        /* ensure inputs can be toggled without breaking layout */
+        input.is-rtl, textarea.is-rtl { direction: rtl; text-align: right; unicode-bidi: plaintext; }
+        input.is-ltr, textarea.is-ltr { direction: ltr; text-align: left; unicode-bidi: plaintext; }
+
+        /* Ratio Fixed Preview */
+        #mediaPrev {
+            position: relative;
+            width: 100%;
+            padding-top: 75%; /* 4:3 Ratio */
+            margin-bottom: 20px;
+            border-radius: 18px;
+            overflow: hidden;
+            border: 1px solid var(--glass-border);
+            cursor: pointer;
+        }
+        #imgSrc {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            object-fit: cover;
+        }
+
+        /* Buttons */
+        .btn {
+            height: 48px; border-radius: 24px; border: none; font-weight: 700; cursor: pointer;
+            text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px;
+            transition: transform 0.2s var(--ease-spring), filter 0.2s ease;
+            position: relative; overflow: hidden;
+        }
+        .btn:active { transform: scale(0.95); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+        .btn-send {
+            background: var(--liquid-gold); color: #1a1a1a;
+            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.3);
+            text-shadow: 0 1px 0 rgba(255,255,255,0.4);
+        }
+
+        #photoBtn {
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+        }
+        .btn-delete { background: rgba(255, 59, 48, 0.2) !important; color: #ff3b30 !important; border: 1px solid rgba(255, 59, 48, 0.4) !important; }
+
+        /* Filters & Search */
+        .search-box {
+            width: 100%; padding: 14px 20px; border-radius: 20px;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid var(--glass-border); color: #fff; outline: none;
+            transition: 0.3s; font-size: 15px; backdrop-filter: blur(25px); margin-top: 15px;
+        }
+        .search-box:focus { background: rgba(255,255,255,0.12); box-shadow: 0 0 20px rgba(255,255,255,0.05); }
+
+        .sort-container { position: relative; display: flex; justify-content: flex-end; }
+        .sort-panel-trigger {
+            background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: var(--gold-primary);
+            padding: 8px 16px; border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer;
+            backdrop-filter: blur(20px); transition: 0.3s; display: flex; align-items: center; gap: 6px;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+
+        .sort-dropdown {
+            position: absolute; top: calc(100% + 10px); right: 0; width: 220px;
+            background: rgba(20,20,20,0.95); backdrop-filter: blur(50px);
+            border: 1px solid var(--glass-border); border-radius: 24px; padding: 8px; z-index: 2000;
+            display: none; flex-direction: column; gap: 4px;
+            box-shadow: 0 30px 60px rgba(0,0,0,1);
+            transform-origin: top right;
+            opacity: 0; transform: translateY(-10px) scale(0.95);
+            transition: transform 0.2s ease, opacity 0.2s ease;
+        }
+        .sort-item {
+            padding: 12px 16px; border-radius: 16px; font-size: 12px; font-weight: 600;
+            color: rgba(255,255,255,0.5); transition: 0.2s; cursor: pointer;
+        }
+        .sort-item.selected { color: #000; background: var(--liquid-gold); font-weight: 800; }
+
+        /* Feed & Posts */
+        .post-preview-wrapper {
+            position: relative; overflow: hidden; margin-bottom: 20px; touch-action: pan-y; opacity: 0;
+            transform: translateY(20px); border-radius: 36px;
+        }
+        .post-preview-wrapper.visible {
+            animation: liquidReveal 0.8s var(--ease-spring) forwards;
+        }
+
+        .swipe-hint {
+            position: absolute; right: 0; top: 0; bottom: 0; width: 80px;
+            background: var(--gold-primary);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 900; font-size: 12px; color: #000; z-index: 1;
+            transform: translateX(100%); box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+            letter-spacing: 1px; writing-mode: vertical-rl; text-orientation: mixed;
+        }
+
+        .post-preview {
+            padding: 24px; position: relative; z-index: 2;
+            transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            background: transparent; cursor: pointer;
+        }
+        .post-preview:active { background: rgba(255,255,255,0.03); }
+
+        /* Badges */
+        .badge {
+            display: inline-flex; align-items: center; padding: 6px 12px; border-radius: 12px;
+            font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+            margin-right: 6px; margin-bottom: 6px;
+            backdrop-filter: blur(10px);
+        }
+        .badge-view-top { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.15); }
+        .badge-hot-topic { background: rgba(255, 0, 127, 0.15); border: 1px solid var(--pink-neon); color: var(--pink-neon); box-shadow: 0 0 15px rgba(255,0,127,0.2); }
+        .badge-verified-gg { background: var(--liquid-gold); color: #000; box-shadow: 0 0 20px rgba(212,175,55,0.4); border: none; font-weight: 800; }
+        .badge-new { background: #fff; color: #000; font-weight: 800; }
+
+        .unread-badge {
+            background: var(--gold-primary); color: #000; padding: 4px 10px; border-radius: 50px;
+            font-size: 12px; font-weight: 700; box-shadow: 0 0 15px var(--gold-primary);
+        }
+
+        /* Post Content */
+        .avatar-circle {
+            width: 44px; height: 44px; border-radius: 50%;
+            background: linear-gradient(135deg, #222, #111);
+            border: 1px solid var(--glass-border);
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Bodoni Moda'; font-style: italic; color: var(--gold-primary); font-size: 22px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .side-img-preview {
+            width: 70px; height: 70px; border-radius: 16px; object-fit: cover;
+            border: 1px solid var(--glass-highlight);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+        }
+
+        .post-meta {
+            margin-top: 15px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.05);
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 10px; font-weight: 600; opacity: 0.7; letter-spacing: 0.5px;
+        }
+
+        /* Popups */
+        .popup-wrapper {
+            position: fixed !important; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+            display: none; align-items: center; justify-content: center; z-index: 99999999;
+            padding: 30px;
+        }
+        .popup-wrapper.active { display: flex !important; }
+
+        .popup-content {
+            max-width: 400px; padding: 40px 30px; text-align: center;
+            border: 1px solid var(--gold-primary) !important;
+            box-shadow: 0 0 50px rgba(212,175,55,0.15);
+            animation: liquidReveal 0.6s var(--ease-spring) forwards;
+        }
+
+        /* Fullscreen View */
+        #fullscreenOverlay {
+            position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95);
+            z-index: 1000000; display:none; align-items:center; justify-content:center;
+            backdrop-filter: blur(20px);
+        }
+        #fullscreenImg { max-width: 95%; max-height: 85%; border-radius: 12px; object-fit: contain; }
+
+        /* Music Player */
+        .music-player {
+            position: fixed; left: 24px; bottom: 35px; z-index: 9999;
+            width: 56px; height: 56px; border-radius: 50%;
+            background: rgba(30,30,30,0.6);
+            border: 1px solid var(--glass-highlight);
+            backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            transition: all 0.4s var(--ease-spring);
+        }
+        .music-player:active { transform: scale(0.85); }
+        .music-player svg { fill: #fff; width: 20px; height: 20px; }
+        .music-player.playing {
+            border-color: var(--gold-primary);
+            box-shadow: 0 0 30px rgba(212, 175, 55, 0.4);
+            animation: glowPulse 2s infinite;
+        }
+        .music-player.playing svg { fill: var(--gold-primary); }
+
+        .v-tag {
+            position: fixed; bottom: 35px; right: 35px; font-size: 9px; font-weight: 700;
+            z-index: 9999; color: #fff; opacity: 0.2; pointer-events: none; letter-spacing: 2px;
+        }
+
+        #adminPass {
+            background: rgba(0,0,0,0.3) !important;
+            border: 1px solid var(--glass-border) !important;
+            color: #fff !important;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
+            font-size: 18px; letter-spacing: 4px;
+        }
+
+        #error-msg {
+            color: #ff3b30;
+            font-size: 11px;
+            font-weight: 700;
+            margin-top: 10px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="music-player" id="jukebox" role="button" aria-pressed="false" aria-label="Play music" tabindex="0">
+    <svg id="playIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+    <svg id="stopIcon" viewBox="0 0 24 24" style="display:none;"><path d="M6 6h12v12H6z"/></svg>
+</div>
+
+<div id="fullscreenOverlay" onclick="if(event.target===this) this.style.display='none'" role="dialog" aria-modal="true">
+    <img id="fullscreenImg" src="" alt="Full view">
+</div>
+
+<div id="welcomePopup" class="popup-wrapper" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="popup-content liquid-card">
+        <h2 style="color:var(--gold-primary); margin-bottom:20px; font-size: 24px; font-family:'Bodoni Moda'; font-style:italic;">Hey Upper East Siders, Gossip Girl here</h2>
+        <p style="font-size:15px; opacity:0.8; line-height:1.6; margin-bottom:30px; font-weight:500;">
+            And I have the biggest news ever!<br>
+            Gossip Girl website is now alive!<br>
+            Feel free to explore the whole blog, and oop don't forget to gossip hehehe ;)<br><br>
+            Love you all, XOXO.
+        </p>
+        <button class="btn btn-send" style="width:100%" onclick="closeWelcome()" aria-label="Close welcome popup">OKAY</button>
+    </div>
+</div>
+
+<div id="sentPopup" class="popup-wrapper" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="popup-content liquid-card">
+        <h2 style="color:var(--gold-primary); margin-bottom:12px; font-size: 24px; font-weight: 800; letter-spacing:-1px;">BLASTED</h2>
+        <p style="opacity:0.8; font-size: 16px;">Your tip is sent to Gossip Girl</p>
+        <button class="btn btn-send" style="width:100%; margin-top:25px;" onclick="closeSent()" aria-label="Close sent popup">OKAY</button>
+    </div>
+</div>
+
+<div id="adminPopup" class="popup-wrapper" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="popup-content liquid-card">
+        <h2 style="color:var(--gold-primary); margin-bottom:8px; text-transform: uppercase; font-weight: 800; letter-spacing:1px;">ENTER PASSCODE</h2>
+        <p style="font-size: 10px; opacity: 0.5; margin-bottom: 25px; font-weight: 700;">NOTE: ONLY GOSSIP GIRL KNOWS IT</p>
+        <input type="password" id="adminPass" style="width:100%; padding:18px; border-radius:18px; text-align:center; outline:none;" placeholder="••••••••" aria-label="Admin passcode">
+        <div id="error-msg">WRONG PASSCODE</div>
+        <div style="display:flex; gap:12px; margin-top:20px;">
+            <button class="btn" style="background:rgba(255,255,255,0.05); color:#fff; flex:1;" onclick="closeAdmin()" aria-label="Cancel admin">Cancel</button>
+            <button class="btn btn-send" style="flex:1;" onclick="verifyAdmin()" aria-label="Verify admin">Unlock</button>
+        </div>
+    </div>
+</div>
+
+<audio id="entranceAudio" src="tamakitono - Gossip Girl Intro.m4a" preload="auto"></audio>
+
+<header id="mainHead">
+    <div class="branding" id="brandingLayer" tabindex="0" aria-label="Gossip Girl branding">
+        <h1 class="title" role="heading" aria-level="1">Gossip Girl</h1>
+        <div class="subtitle" id="rotatableSubtitle" aria-live="polite">your one and only source of scandals</div>
+    </div>
+</header>
+
+<main class="container" id="mainContainer" role="main">
+    <div class="tip-header">
+        <span class="main-tag">Send a Tip</span>
+        <span class="sub-tag">ALL ANONYMOUS, NO SIGN UP REQUIRED</span>
+    </div>
+
+    <section class="composer liquid-card" aria-labelledby="tip-header">
+        <div id="mediaPrev" style="display:none;" onclick="expandPreview()" role="button" aria-label="Open preview">
+            <img id="imgSrc" alt="Upload preview">
+        </div>
+        <textarea id="tipIn" placeholder="Spotted!" aria-label="Tip content" oninput="autoResizeTextArea(this)"></textarea>
+        <div style="display:flex; gap:12px; width: 100%;">
+            <button class="btn" id="photoBtn" style="flex:1;" aria-label="Add or remove photo">ADD PHOTO</button>
+            <button class="btn btn-send" id="sendBtn" style="flex:1;" aria-label="Send tip">BLAST</button>
+        </div>
+        <input type="file" id="fileIn" accept="image/*" style="display:none" onchange="processImage(this)" aria-hidden="true">
+    </section>
+
+    <div style="margin-top: 60px; margin-bottom: 10px;">
+        <div style="display:flex; align-items: center; justify-content: space-between; width: 100%; padding: 0 8px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <h2 style="font-weight:800; margin:0; font-size:38px; letter-spacing:-1px; color: #fff;">Spotted!</h2>
+                <div id="unreadCounter" aria-hidden="true"></div>
+            </div>
+            <div class="sort-container">
+                <div class="sort-panel-trigger" id="sortTrigger" onclick="toggleSortPanel(event)" role="button" aria-haspopup="true" aria-expanded="false" tabindex="0">Latest ▾</div>
+                <div class="sort-dropdown" id="sortDropdown" role="menu" aria-hidden="true">
+                    <div class="sort-item selected" role="menuitem" data-sort="latest" data-label="Latest">Latest</div>
+                    <div class="sort-item" role="menuitem" data-sort="views" data-label="Most Viewed">Most Viewed</div>
+                    <div class="sort-item" role="menuitem" data-sort="hot" data-label="Hot Topic">Hot Topic</div>
+                    <div class="sort-item" role="menuitem" data-sort="photos" data-label="Photos">Photos</div>
+                    <div class="sort-item" role="menuitem" data-sort="verified" data-label="Verified">Verified</div>
+                    <div class="sort-item" role="menuitem" data-sort="confirmed" data-label="Confirmed">Confirmed</div>
+                    <div class="sort-item" role="menuitem" data-sort="vgg" data-label="Verified by GG">Verified by GG</div>
+                </div>
+            </div>
+        </div>
+        <input type="text" class="search-box" id="searchBar" placeholder="Search keywords..." oninput="debouncedRender()" aria-label="Search tips">
+    </div>
+    <div id="feed" style="margin-top: 25px;" role="list"></div>
+</main>
+<div class="v-tag">V1.0 FINAL</div>
+
+<script>
+/* ============================
+   Defensive & Performance Setup
+   ============================ */
+
+/* Small utility: use requestIdleCallback when available */
+const runWhenIdle = (fn) => {
+    if ('requestIdleCallback' in window) requestIdleCallback(fn, {timeout: 1500});
+    else setTimeout(fn, 600);
+};
+
+function escapeHTML(str) {
+    if (!str && str !== 0) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;')
+        .replace(/\//g, '&#x2F;');
+}
+function sanitizeForId(str) {
+    if (!str) return 'id_unknown';
+    return 'id_' + String(str).replace(/[^a-zA-Z0-9-_:.]/g, '_');
+}
+function safeNumber(n) {
+    const v = Number(n);
+    return isNaN(v) ? 0 : v;
+}
+
+/* ---------- Arabic detection & bidi helpers (NEW) ---------- */
+/* Matches Arabic script ranges including Arabic, Arabic Supplement, Arabic Extended-A, presentation forms */
+const ARABIC_REGEX = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
+
+function containsArabic(text) {
+    if (!text) return false;
+    try {
+        return ARABIC_REGEX.test(String(text));
+    } catch (e) {
+        return false;
+    }
+}
+
+/* Apply direction to an input/textarea element in-place */
+function applyDirectionToInput(el) {
+    if (!el) return;
+    const val = el.value || el.placeholder || '';
+    const hasArabic = containsArabic(val);
+    if (hasArabic) {
+        el.setAttribute('dir', 'rtl');
+        el.classList.add('is-rtl');
+        el.classList.remove('is-ltr');
+    } else {
+        el.setAttribute('dir', 'ltr');
+        el.classList.remove('is-rtl');
+        el.classList.add('is-ltr');
+    }
+}
+
+/* Apply direction to a displayed content element (expects element to contain plain HTML-safe text) */
+function buildBidiSpanFor(textEscaped) {
+    // textEscaped is already escaped HTML
+    const isArabic = containsArabic(textEscaped);
+    const dir = isArabic ? 'rtl' : 'ltr';
+    const cls = isArabic ? 'bidi rtl' : 'bidi ltr';
+    // Use a container that preserves line breaks and uses unicode-bidi: plaintext
+    return `<div class="${cls}" dir="${dir}">${textEscaped || ''}</div>`;
+}
+
+/* ---------------- Firebase config --------------- */
+const firebaseConfig = {
+    apiKey: "AIzaSyCTdVcJspQxXiq_Kd7ImL32xWsjv0HgENE",
+    authDomain: "gossip-girl-4c9f2.firebaseapp.com",
+    projectId: "gossip-girl-4c9f2",
+    databaseURL: "https://gossip-girl-4c9f2-default-rtdb.firebaseio.com"
+};
+
+let db = null;
+
+/* Dynamically load Firebase SDKs non-blocking (deferred init) */
+function ensureFirebaseSDKs(cb) {
+    if (typeof firebase !== 'undefined' && firebase.database) {
+        try { if (!db) { firebase.initializeApp(firebaseConfig); db = firebase.database(); } } catch(e){}
+        if (cb) cb();
+        return;
+    }
+    // load scripts
+    const urls = [
+        'https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js',
+        'https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js'
+    ];
+    let loaded = 0;
+    function scriptLoaded() {
+        loaded++;
+        if (loaded === urls.length) {
+            try {
+                if (!firebase.apps || !firebase.apps.length) firebase.initializeApp(firebaseConfig);
+                db = firebase.database();
+            } catch (e) {
+                console.warn('Firebase init error after load', e);
+            }
+            if (cb) cb();
+        }
+    }
+    urls.forEach(u => {
+        const s = document.createElement('script');
+        s.src = u;
+        s.async = true;
+        s.onload = scriptLoaded;
+        s.onerror = () => { console.warn('Failed to load', u); scriptLoaded(); };
+        document.head.appendChild(s);
+    });
+}
+
+/* ---------------- Local ID --------------- */
+if (!localStorage.getItem('gg_id')) {
+    localStorage.setItem('gg_id', 'user_' + Math.random().toString(36).substr(2, 9));
+}
+const MY_ID = localStorage.getItem('gg_id');
+
+/* ============================
+   Notification helpers
+   ============================ */
+function requestNotificationPermission() {
+    if ("Notification" in window && Notification.permission !== "granted") {
+        Notification.requestPermission().catch(()=>{});
+    }
+}
+
+function listenForNewTips() {
+    if (!db) return;
+    try {
+        db.ref('posts').limitToLast(1).on('child_added', (snapshot) => {
+            const post = snapshot.val();
+            const postId = snapshot.key;
+            if (post && post.date && (Date.now() - (Number(post.date) || 0) < 15000)) {
+                if (Notification.permission === "granted") {
+                    const notification = new Notification("New Tip! Tap to view", {
+                        body: post.text ? escapeHTML(post.text).substring(0, 50) + "..." : "Image attached",
+                        icon: "https://images.unsplash.com/photo-1540959733332-e94e270b2d42?q=80&w=100&auto=format&fit=crop"
+                    });
+                    notification.onclick = function() {
+                        window.focus();
+                        window.location.href = `thread.html?id=${encodeURIComponent(postId)}`;
+                    };
+                }
+            }
+        });
+    } catch(e){ console.warn('Notification listener failed', e); }
+}
+
+/* ============================
+   Jukebox
+   ============================ */
+const songs = [
+    "05. JAY-Z, Alicia Keys - Empire State Of Mind.mp3",
+    "01 - Jason Derülo - Whatcha Say.mp3"
+];
+let currentSongIndex = 0;
+let audioPlayer = new Audio();
+audioPlayer.preload = "auto";
+let stopTime = 0;
+let isPlaying = false;
+
+function handleJukebox() {
+    const jukeboxBtn = document.getElementById('jukebox');
+    const playIcon = document.getElementById('playIcon');
+    const stopIcon = document.getElementById('stopIcon');
+
+    if (!jukeboxBtn) return;
+
+    if (!isPlaying) {
+        const now = Date.now();
+        if (stopTime !== 0 && (now - stopTime) < 10000) {
+            currentSongIndex = (currentSongIndex + 1) % songs.length;
+        }
+
+        try {
+            audioPlayer.pause();
+            audioPlayer.src = songs[currentSongIndex];
+            audioPlayer.load();
+        } catch(e){ console.warn('audio error set src', e); }
+
+        const playPromise = audioPlayer.play();
+        if (playPromise !== undefined) {
+            playPromise.then(() => {
+                isPlaying = true;
+                jukeboxBtn.classList.add('playing');
+                jukeboxBtn.setAttribute('aria-pressed','true');
+                if (playIcon) playIcon.style.display = 'none';
+                if (stopIcon) stopIcon.style.display = 'block';
+            }).catch(error => {
+                console.log("Playback failed: " + error);
+                isPlaying = false;
+                jukeboxBtn.setAttribute('aria-pressed','false');
+            });
+        } else {
+            // older browsers
+            isPlaying = true;
+            jukeboxBtn.classList.add('playing');
+            jukeboxBtn.setAttribute('aria-pressed','true');
+            if (playIcon) playIcon.style.display = 'none';
+            if (stopIcon) stopIcon.style.display = 'block';
+        }
+    } else {
+        audioPlayer.pause();
+        stopTime = Date.now();
+        isPlaying = false;
+        jukeboxBtn.classList.remove('playing');
+        jukeboxBtn.setAttribute('aria-pressed','false');
+        if (playIcon) playIcon.style.display = 'block';
+        if (stopIcon) stopIcon.style.display = 'none';
+    }
+}
+
+document.getElementById('jukebox')?.addEventListener('click', handleJukebox);
+document.getElementById('jukebox')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleJukebox(); }
+});
+
+/* ============================
+   DOM Refs and state
+   ============================ */
+const DOM = {
+    branding: document.getElementById('brandingLayer'),
+    subtitle: document.getElementById('rotatableSubtitle'),
+    feed: document.getElementById('feed'),
+    search: document.getElementById('searchBar'),
+    unread: document.getElementById('unreadCounter'),
+    sortTrigger: document.getElementById('sortTrigger'),
+    sortDropdown: document.getElementById('sortDropdown'),
+    audio: document.getElementById('entranceAudio')
+};
+
+let allPosts = [], commentCounts = {}, b64 = null, currentSort = 'latest';
+
+/* Intersection observer for reveal */
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            observer.unobserve(entry.target);
+        }
+    });
+}, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+/* Resize textarea */
+function autoResizeTextArea(el) {
+    try {
+        el.style.height = '50px';
+        el.style.height = (el.scrollHeight) + 'px';
+    } catch(e){}
+}
+
+/* Subtitle rotation */
+function initSubtitleRotation() {
+    if (!DOM.subtitle) return;
+    const texts = ["your one and only source of scandals", "you know you love me, xoxo"];
+    let index = 0;
+    setInterval(() => {
+        try {
+            DOM.subtitle.classList.add('subtitle-fade');
+            setTimeout(() => {
+                index = (index + 1) % texts.length;
+                DOM.subtitle.innerText = texts[index];
+                DOM.subtitle.classList.remove('subtitle-fade');
+            }, 600);
+        } catch(e){}
+    }, 10000);
+}
+
+/* Popup close by clicking outside or Escape */
+function setupPopupCloseHandlers() {
+    document.querySelectorAll('.popup-wrapper').forEach(p => {
+        p.addEventListener('click', (ev) => {
+            if (ev.target === p) {
+                p.classList.remove('active');
+            }
+        });
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.popup-wrapper.active').forEach(p => p.classList.remove('active'));
+        }
+    });
+}
+
+/* Window load initialization */
+window.addEventListener('load', () => {
+    requestNotificationPermission();
+    setupPopupCloseHandlers();
+
+    if(!localStorage.getItem('visited_v30_official')) {
+        setTimeout(() => {
+            const wp = document.getElementById('welcomePopup');
+            if (wp) wp.classList.add('active');
+        }, 500);
+    }
+    initSubtitleRotation();
+
+    // Non-critical: init data & listeners during idle time to avoid blocking paint
+    runWhenIdle(() => {
+        // dynamically ensure Firebase SDKs and then wire data
+        ensureFirebaseSDKs(() => {
+            initData();
+            listenForNewTips();
+        });
+    });
+
+    /* Apply directional behaviour to inputs and textareas (initial + live) */
+    try {
+        const inputs = Array.from(document.querySelectorAll('input[type="text"], input[type="search"], textarea, input[type="password"]'));
+        inputs.forEach(inp => {
+            applyDirectionToInput(inp);
+            inp.addEventListener('input', () => applyDirectionToInput(inp), {passive:true});
+            // Also apply on paste/change
+            inp.addEventListener('paste', () => setTimeout(()=>applyDirectionToInput(inp), 20), {passive:true});
+            inp.addEventListener('change', () => applyDirectionToInput(inp), {passive:true});
+        });
+    } catch(e){}
+});
+
+/* Welcome close */
+function closeWelcome() {
+    localStorage.setItem('visited_v30_official', 'true');
+    document.getElementById('welcomePopup')?.classList.remove('active');
+    if (DOM.audio) {
+        DOM.audio.play().catch(e => console.log("Intro audio blocked."));
+    }
+}
+function closeSent() { document.getElementById('sentPopup')?.classList.remove('active'); }
+function openAdmin() { document.getElementById('adminPopup')?.classList.add('active'); }
+function closeAdmin() {
+    document.getElementById('adminPopup')?.classList.remove('active');
+    const err = document.getElementById('error-msg');
+    if (err) err.style.display = 'none';
+    const pass = document.getElementById('adminPass');
+    if (pass) pass.value = '';
+}
+
+/* Admin verify */
+function verifyAdmin() {
+    const passInput = document.getElementById('adminPass');
+    const errMsg = document.getElementById('error-msg');
+    if (!passInput) return;
+    const enteredPass = passInput.value.trim();
+    if(!enteredPass) return;
+
+    if(!db) { alert('Connection error.'); return; }
+
+    db.ref('admin_access').once('value', (snapshot) => {
+        const accessList = snapshot.val();
+        if (accessList && accessList.hasOwnProperty(enteredPass)) {
+            sessionStorage.setItem('admin_auth', 'true');
+            window.location.href = 'admin.html';
+        } else {
+            if (errMsg) errMsg.style.display = 'block';
+            passInput.value = '';
+            setTimeout(() => { if (errMsg) errMsg.style.display = 'none'; }, 3000);
+        }
+    }).catch(() => {
+        alert("Connection error.");
+    });
+}
+
+/* Press-and-hold admin opener */
+let pressTimer;
+if (DOM.branding) {
+    const startPress = () => {
+        pressTimer = setTimeout(() => {
+            if (window.navigator?.vibrate) { try { window.navigator.vibrate(80); } catch(e){} }
+            openAdmin();
+        }, 3000);
+    };
+    const cancelPress = () => clearTimeout(pressTimer);
+    DOM.branding.addEventListener('touchstart', startPress, {passive: true});
+    DOM.branding.addEventListener('touchend', cancelPress, {passive: true});
+    DOM.branding.addEventListener('mousedown', startPress);
+    DOM.branding.addEventListener('mouseup', cancelPress);
+}
+
+/* Sort dropdown */
+function toggleSortPanel(event) {
+    if(event) event.stopPropagation();
+    const dp = DOM.sortDropdown;
+    const trigger = DOM.sortTrigger;
+    const isOpen = dp.style.display === 'flex';
+    if(!isOpen) {
+        dp.style.display = 'flex';
+        dp.setAttribute('aria-hidden','false');
+        trigger.setAttribute('aria-expanded','true');
+        requestAnimationFrame(() => {
+            dp.style.opacity = '1';
+            dp.style.transform = 'translateY(0) scale(1)';
+        });
+    } else { closeSortPanel(); }
+}
+function closeSortPanel() {
+    const dp = DOM.sortDropdown;
+    const trigger = DOM.sortTrigger;
+    if(dp && dp.style.display === 'flex') {
+        dp.style.opacity = '0';
+        dp.style.transform = 'translateY(-10px) scale(0.95)';
+        dp.setAttribute('aria-hidden','true');
+        trigger.setAttribute('aria-expanded','false');
+        setTimeout(() => { dp.style.display = 'none'; }, 200);
+    }
+}
+window.addEventListener('click', closeSortPanel);
+
+/* Sort picker (delegated) */
+document.getElementById('sortDropdown')?.addEventListener('click', (e) => {
+    const it = e.target.closest('.sort-item');
+    if (!it) return;
+    const type = it.dataset.sort;
+    const label = it.dataset.label || it.innerText;
+    updateSort(type, label);
+});
+
+/* Update sort */
+function updateSort(type, label) {
+    currentSort = type || 'latest';
+    if(DOM.sortTrigger) DOM.sortTrigger.innerHTML = (label || 'Latest') + ' ▾';
+    document.querySelectorAll('.sort-item').forEach(item => {
+        item.classList.toggle('selected', (item.dataset.label || item.innerText).toLowerCase() === (label || '').toLowerCase());
+    });
+    closeSortPanel();
+    renderPosts();
+}
+
+/* Scroll header shrink optimization */
+let scrollTicking = false;
+window.addEventListener('scroll', () => {
+    if (!scrollTicking) {
+        window.requestAnimationFrame(() => {
+            if (window.scrollY > 40) DOM.branding.classList.add('scrolled');
+            else DOM.branding.classList.remove('scrolled');
+            scrollTicking = false;
+        });
+        scrollTicking = true;
+    }
+}, {passive: true});
+
+/* Debounce for search */
+let renderTimeout;
+function debouncedRender() { clearTimeout(renderTimeout); renderTimeout = setTimeout(renderPosts, 150); }
+
+/* ---------------- Firebase data wiring ---------------- */
+function initData() {
+    if (!db) {
+        // degrade gracefully
+        console.warn('No database available - running in offline mode.');
+        // attempt to render any local tips too
+        const local = JSON.parse(localStorage.getItem('local_tips') || '[]');
+        if (local && Array.isArray(local) && local.length) {
+            // merge local tips into allPosts for display (local tips have no id/date set by server)
+            const localMapped = local.map((p,i) => ({ id: 'local_' + i + '_' + Date.now(), ...p }));
+            allPosts = localMapped.concat(allPosts);
+        }
+        renderPosts();
+        return;
+    }
+    // Wire comments and posts
+    db.ref('comments').on('value', snap => {
+        const data = snap.val() || {};
+        commentCounts = Object.keys(data).reduce((acc, id) => {
+            acc[id] = Object.keys(data[id]).length; return acc;
+        }, {});
+        renderPosts();
+    });
+    db.ref('posts').on('value', s => {
+        const data = s.val();
+        allPosts = data ? Object.keys(data).map(k => ({id:k, ...data[k]})) : [];
+        renderPosts();
+    });
+}
+
+/* ---------------- RENDER POSTS (safe) ---------------- */
+function renderPosts() {
+    if(!DOM.feed) return;
+    const q = (DOM.search?.value || "").toLowerCase();
+    let readPosts = [];
+    try { readPosts = JSON.parse(localStorage.getItem('read_posts') || '[]') || []; } catch(e) { readPosts = []; }
+
+    let posts = allPosts.filter(p => p && ((p.text||"").toLowerCase().includes(q) || (p.image||"").toLowerCase().includes(q)));
+
+    if(posts.length === 0) {
+        DOM.feed.innerHTML = '<div style="margin-top:60px; opacity:0.3; font-weight:700; text-align:center; color:var(--gold-primary);">No drama? Start it!</div>';
+        if(DOM.unread) DOM.unread.innerHTML = '';
+        return;
+    }
+
+    const maxViews = posts.length ? Math.max(...posts.map(p => safeNumber(p.views || 0))) : 0;
+    const maxComments = posts.length ? Math.max(...posts.map(p => commentCounts[p.id] || 0)) : 0;
+
+    if(currentSort === 'latest') posts.sort((a,b) => (Number(b.date) || 0) - (Number(a.date) || 0));
+    else if(currentSort === 'views') posts.sort((a,b) => (safeNumber(b.views) - safeNumber(a.views)));
+    else if(currentSort === 'hot') posts.sort((a,b) => (commentCounts[b.id] || 0) - (commentCounts[a.id] || 0));
+    else if(currentSort === 'photos') posts = posts.filter(p => p.image).sort((a,b) => (Number(b.date) || 0) - (Number(a.date) || 0));
+    else if(currentSort === 'verified') posts = posts.filter(p => (Number(p.verifyCount) || 0) >= 50);
+    else if(currentSort === 'confirmed') posts = posts.filter(p => (Number(p.verifyCount) || 0) >= 100);
+    else if(currentSort === 'vgg') posts = posts.filter(p => p.verifiedByGG);
+
+    const unreadCount = posts.filter(p => !readPosts.includes(p.id)).length;
+    if(DOM.unread) DOM.unread.innerHTML = unreadCount > 0 ? `<span class="unread-badge" aria-hidden="true">${unreadCount}</span>` : '';
+
+    // Build feed HTML safely
+    const html = posts.map((p, index) => {
+        const isRead = readPosts.includes(p.id);
+        let badges = '';
+        if (Date.now() - (Number(p.date) || 0) < 43200000) badges += '<span class="badge badge-new">New</span>';
+        if (Number(p.views) === maxViews && maxViews > 0) badges += '<span class="badge badge-view-top">Most Viewed</span>';
+        if ((commentCounts[p.id] || 0) === maxComments && maxComments > 0) badges += '<span class="badge badge-hot-topic">Hot Topic</span>';
+        if (p.verifiedByGG) badges += '<span class="badge badge-verified-gg">Verified by Gossip Girl</span>';
+
+        // create safe IDs and attributes
+        const wrapId = sanitizeForId('wrap_' + p.id + '_' + index);
+        const postId = sanitizeForId('post_' + p.id + '_' + index);
+        const safePid = encodeURIComponent(p.id); // will be stored in data-pid
+
+        const safeText = escapeHTML(p.text || '');
+        // new: wrap text in a bidi-aware container so Arabic renders RTL and mixed content stays correct
+        const safeTextWithBidi = buildBidiSpanFor(safeText);
+
+        const safeTime = escapeHTML(timeAgo(Number(p.date)));
+        const safeViews = escapeHTML(String(Number(p.views || 0)));
+        const safeComments = escapeHTML(String(Number(commentCounts[p.id] || 0)));
+        const safeVerify = escapeHTML(String(Number(p.verifyCount || 0)));
+
+        return `
+            <div class="post-preview-wrapper liquid-card" id="${wrapId}" role="listitem" style="animation-delay: ${index * 0.05}s">
+                <div class="swipe-hint" aria-hidden="true">OPEN</div>
+                <div class="post-preview" data-pid="${safePid}" id="${postId}" role="button" tabindex="0" aria-label="Open tip">
+                    ${!isRead ? '<div style="position:absolute; top:28px; right:28px; width:8px; height:8px; background:var(--gold-primary); border-radius:50%; box-shadow: 0 0 10px var(--gold-primary); z-index:10;" aria-hidden="true"></div>' : ''}
+                    ${badges ? `<div style="margin-bottom:16px; display:flex; flex-wrap:wrap;">${badges}</div>` : ''}
+                    <div style="display:flex; align-items:flex-start; gap:16px;">
+                        <div style="flex:1;">
+                            <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+                                <div class="avatar-circle" aria-hidden="true">?</div>
+                                <div>
+                                    <div style="font-size:13px; font-weight:700; color:#fff;">Anonymous</div>
+                                    <div style="opacity:0.5; font-size:11px; font-weight:500;">${safeTime}</div>
+                                </div>
+                            </div>
+                            <div style="font-size:15px; line-height:1.5; color: rgba(255,255,255,0.9); font-weight: 400;">
+                                ${safeTextWithBidi}
+                            </div>
+                        </div>
+                        ${p.image ? `<img src="${escapeHTML(p.image)}" class="side-img-preview" loading="lazy" alt="post image">` : ''}
+                    </div>
+                    <div class="post-meta">
+                        <div style="color:var(--gold-light);">👁 ${safeViews} &nbsp;•&nbsp; 💬 ${safeComments} &nbsp;•&nbsp; ✓ ${safeVerify}</div>
+                        <div style="color:var(--gold-primary); font-weight:800;">SWIPE →</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    DOM.feed.innerHTML = html;
+
+    // Observe and attach behavior
+    posts.forEach((p, index) => {
+        const wrapId = sanitizeForId('wrap_' + p.id + '_' + index);
+        const wrap = document.getElementById(wrapId);
+        if (wrap) observer.observe(wrap);
+
+        // Attach swipe handlers robustly by locating element by data-pid
+        const encodedPid = encodeURIComponent(p.id);
+        const postNode = document.querySelector(`.post-preview[data-pid="${encodedPid}"]`);
+        if (postNode) setupSwipeForNode(postNode, p.id);
+    });
+}
+
+/* Delegated click + keyboard handler for feed items */
+document.getElementById('feed')?.addEventListener('click', (e) => {
+    const postEl = e.target.closest('.post-preview');
+    if (postEl && postEl.dataset && postEl.dataset.pid) {
+        const pid = decodeURIComponent(postEl.dataset.pid);
+        markReadAndGoto(pid);
+    }
+});
+document.getElementById('feed')?.addEventListener('keydown', (e) => {
+    if ((e.key === 'Enter' || e.key === ' ') && e.target.closest('.post-preview')) {
+        e.preventDefault();
+        const postEl = e.target.closest('.post-preview');
+        const pid = decodeURIComponent(postEl.dataset.pid);
+        markReadAndGoto(pid);
+    }
+});
+function markReadAndGoto(id) {
+    try {
+        let r = JSON.parse(localStorage.getItem('read_posts') || '[]');
+        if (!Array.isArray(r)) r = [];
+        if (!r.includes(id)) { r.push(id); localStorage.setItem('read_posts', JSON.stringify(r)); }
+    } catch(e){}
+    window.location.href = `thread.html?id=${encodeURIComponent(id)}`;
+}
+
+/* Swipe handlers: more robust implementation that attaches to the actual node */
+function setupSwipeForNode(node, pid) {
+    if(!node) return;
+    let startX = 0;
+    node.addEventListener('touchstart', (e) => {
+        startX = e.touches && e.touches[0] ? e.touches[0].clientX : 0;
+    }, {passive: true});
+    node.addEventListener('touchmove', (e) => {
+        if (!startX) return;
+        let diff = startX - (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+        if(diff > 0 && diff < 120) {
+            requestAnimationFrame(() => { node.style.transform = `translateX(-${diff}px)`; });
+        }
+    }, {passive: true});
+    node.addEventListener('touchend', (e) => {
+        if (!startX) return;
+        const finalDiff = startX - (e.changedTouches && e.changedTouches[0] ? e.changedTouches[0].clientX : 0);
+        if(finalDiff > 70) {
+            node.style.transform = 'translateX(-100%)';
+            setTimeout(() => markReadAndGoto(pid), 150);
+        } else {
+            requestAnimationFrame(() => { node.style.transform = 'translateX(0)'; });
+        }
+        startX = 0;
+    }, {passive: true});
+    node.addEventListener('touchcancel', () => {
+        requestAnimationFrame(() => { node.style.transform = 'translateX(0)'; });
+    }, {passive: true});
+}
+
+/* Time ago */
+function timeAgo(t) {
+    if(!t) return 'Just now';
+    const s = Math.floor((Date.now() - t) / 1000);
+    if(s < 60) return 'Just now';
+    if(s < 3600) return Math.floor(s/60) + 'm ago';
+    if(s < 86400) return Math.floor(s/3600) + 'h ago';
+    return Math.floor(s/86400) + 'd ago';
+}
+
+/* Photo button logic */
+const photoBtn = document.getElementById('photoBtn');
+if (photoBtn) {
+    photoBtn.onclick = function() {
+        const tin = document.getElementById('tipIn');
+        if(b64) {
+            b64 = null;
+            const img = document.getElementById('imgSrc');
+            if (img) img.src = '';
+            const mp = document.getElementById('mediaPrev');
+            if (mp) mp.style.display = 'none';
+            this.innerText = 'ADD PHOTO';
+            this.classList.remove('btn-delete');
+            const fileIn = document.getElementById('fileIn');
+            if (fileIn) fileIn.value = "";
+            if (tin) tin.classList.remove('error-placeholder');
+        } else {
+            document.getElementById('fileIn')?.click();
+        }
+    };
+}
+
+/* Image processing/resizing (client-side) */
+function processImage(input) {
+    try {
+        if(input?.files?.[0]) {
+            const file = input.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    try {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        const max = 1000;
+                        if (width > height) { if (width > max) { height *= max / width; width = max; } }
+                        else { if (height > max) { width *= max / height; height = max; } }
+                        canvas.width = width; canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        b64 = canvas.toDataURL('image/jpeg', 0.75);
+                        const imgEl = document.getElementById('imgSrc');
+                        if (imgEl) imgEl.src = b64;
+                        const mp = document.getElementById('mediaPrev');
+                        if (mp) mp.style.display = 'block';
+                        photoBtn.innerText = 'REMOVE';
+                        photoBtn.classList.add('btn-delete');
+                    } catch(e) {
+                        console.error('Image processing error', e);
+                        alert('Image failed to process.');
+                    }
+                };
+                img.onerror = function(){ alert('Invalid image.'); };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    } catch (e) {
+        console.error('processImage error', e);
+    }
+}
+
+/* Expand preview to fullscreen */
+function expandPreview() {
+    if(b64) {
+        const full = document.getElementById('fullscreenImg');
+        const overlay = document.getElementById('fullscreenOverlay');
+        if (full) full.src = b64;
+        if (overlay) overlay.style.display = 'flex';
+    }
+}
+
+/* Sending a tip */
+document.getElementById('sendBtn').onclick = function() {
+    const tin = document.getElementById('tipIn');
+    const t = tin?.value.trim() || "";
+    if(!t && !b64) {
+        if (tin) tin.classList.add('error-placeholder');
+        return;
+    }
+    const btn = this;
+    btn.disabled = true;
+    const previousLabel = btn.innerText;
+    btn.innerText = 'BLASTING...';
+
+    const payload = { text: t, image: b64, date: Date.now(), verifyCount: 0, views: 0 };
+    if (!db) {
+        // Local fallback (do not crash)
+        console.warn('No db - storing locally');
+        let localTips = JSON.parse(localStorage.getItem('local_tips') || '[]');
+        localTips.push(payload);
+        localStorage.setItem('local_tips', JSON.stringify(localTips));
+        finishSendSuccess();
+        btn.disabled = false;
+        btn.innerText = previousLabel || 'BLAST';
+        return;
+    }
+
+    db.ref('tips').push(payload)
+    .then(() => { finishSendSuccess(); })
+    .catch(err => {
+        console.error('Failed to push tip', err);
+        alert("Failed to blast tip.");
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerText = previousLabel || 'BLAST';
+    });
+};
+
+function finishSendSuccess() {
+    const tin = document.getElementById('tipIn');
+    if (tin) { tin.value=''; tin.style.height = '50px'; tin.classList.remove('error-placeholder'); }
+    b64=null;
+    const mp = document.getElementById('mediaPrev');
+    if (mp) mp.style.display='none';
+    if (photoBtn) { photoBtn.innerText = 'ADD PHOTO'; photoBtn.classList.remove('btn-delete'); }
+    document.getElementById('sentPopup')?.classList.add('active');
+    const fileInput = document.getElementById('fileIn');
+    if (fileInput) fileInput.value = "";
+
+    // re-apply direction to tipIn after clearing
+    const tinEl = document.getElementById('tipIn');
+    if (tinEl) applyDirectionToInput(tinEl);
+}
+
+/* Defensive: allow opening admin with long-press keyboard for accessibility */
+document.getElementById('brandingLayer')?.addEventListener('keydown', (e) => {
+    if (e.key === 'a' && (e.ctrlKey || e.metaKey)) {
+        openAdmin();
+    }
+});
+
+/* End of script */
+</script>
+</body>
+</html>
